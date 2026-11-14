@@ -37,6 +37,7 @@ input,select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-
 .steps{text-align:left;margin:10px 0;padding-left:20px}.steps li{margin:6px 0}
 footer{text-align:center;color:var(--mut);font-size:12px;padding:16px}
 [hidden]{display:none!important}
+.veille{border:1px solid var(--line);border-radius:12px;background:#fff;margin:0 0 12px;padding:10px 12px}.veille summary{cursor:pointer;font-weight:800;color:var(--navy)}.veille summary span{font-weight:400;color:var(--mut);font-size:13px}.veille .vg{margin-top:8px}
 .kiosk .kh{display:none}.kbtn{font:inherit;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--blue);cursor:pointer}
 body.kiosk{font-size:18px}body.kiosk #wrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;max-width:1280px;margin:0 auto;padding:10px}
 body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:18px;text-align:center;align-self:start;position:sticky;top:10px}#kqr canvas{width:100%;max-width:320px;height:auto}
@@ -71,6 +72,9 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     <fieldset class="fx-pr"><legend>Votre production de maïs</legend><div class="vg">
       <label>Surface en maïs (ha)<input name="surface" type="number" inputmode="decimal" min="0" step="0.5"></label><label>Coopérative (si membre)<input name="coop"></label></div>
       <div class="chips"><b>Achetez-vous semences et engrais ?</b></div><div class="chips" data-r="intrants"></div></fieldset>
+    <details class="veille"><summary>Veille des prix : vos prix d’achat actuels <span>(facultatif, 1 minute)</span></summary>
+      <p class="note">Aidez-nous à suivre les prix dans votre zone. Indiquez seulement ceux que vous connaissez.</p>
+      <div class="vg" id="veille"></div></details>
     <fieldset><legend>Vos priorités</legend><div class="chips" data-c="prios"></div></fieldset>
     <div class="vg"><label>Dépôt SOLEVO le plus proche<select name="depot"></select></label></div>
     <div class="chips"><b>Être contacté par :</b></div><div class="chips" data-r="contact"></div>
@@ -131,6 +135,8 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   }
   $('#kbtn').addEventListener('click', function () { setKiosk(!KIOSK); });
   setKiosk(KIOSK);
+  var VEILLE = [['mais', 'Maïs', 'FCFA/kg'], ['soja', 'Soja (tourteau)', 'FCFA/kg'], ['son', 'Son de blé', 'FCFA/kg'], ['coq', 'Coquillage', 'FCFA/kg'], ['huile', 'Huile rouge', 'FCFA/litre'], ['pxChair', 'Prémix chair', 'FCFA/sac'], ['pxPonte', 'Prémix ponte', 'FCFA/sac']];
+  $('#veille').innerHTML = VEILLE.map(function (v) { return '<label>' + v[1] + ' <small style="font-weight:400;color:#5B6476">(' + v[2] + ')</small><input name="vx_' + v[0] + '" type="number" inputmode="decimal" min="0" step="any"></label>'; }).join('');
   var R = null, kTimer = null;
   var TABLE = ''; try { var mt = decodeURIComponent(location.hash || '').match(/table=([^&]+)/i); if (mt) TABLE = mt[1].trim(); } catch (e) { /* */ }
   if (TABLE) { var ld = document.querySelector('.lead'); if (ld) ld.innerHTML = 'Vous êtes à la <b>' + esc(TABLE) + '</b> du stand SOLEVO : remplissez la fiche, votre entretien suit.'; }
@@ -139,7 +145,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     var g = function (n) { return (f.elements[n] && f.elements[n].value || '').trim(); };
     R = { profil: val('profil'), nom: g('nom'), tel: g('tel'), localite: g('localite'), email: g('email'), visite: val('visite') || 'Seul(e)', nb: Math.max(1, parseInt(g('nb'), 10) || 1), org: g('org'), kam: val('kam'),
       chair: g('chair'), pondeuse: g('pondeuse'), porc: g('porc'), maisMois: g('maisMois'), fabrique: val('fabrique'), fournisseur: g('fournisseur'), surface: g('surface'), coop: g('coop'), intrants: val('intrants'),
-      prios: $$('[name=prios]:checked').map(function (i) { return i.value; }), depot: g('depot'), contact: val('contact') || 'WhatsApp', consent: f.consent.checked };
+      prios: $$('[name=prios]:checked').map(function (i) { return i.value; }), depot: g('depot'), contact: val('contact') || 'WhatsApp', consent: f.consent.checked, veille: VEILLE.map(function (v) { return [v, g('vx_' + v[0])]; }).filter(function (x) { return x[1]; }) };
     if (R.visite === 'Seul(e)') R.nb = 1;
     var deleg = /Délégation|Association/.test(R.visite), miss = [];
     if (!R.profil) miss.push('votre profil'); if (!R.nom) miss.push('le nom'); if (digits(R.tel).length < 11) miss.push('un téléphone valide'); if (!R.localite) miss.push('la localité');
@@ -160,6 +166,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     [['Poulets de chair', r.chair], ['Pondeuses', r.pondeuse], ['Porcs par an', r.porc], ['Maïs acheté par mois (t)', r.maisMois], ['Aliment', r.fabrique], ['Fournisseur', r.fournisseur], ['Surface maïs (ha)', r.surface], ['Coopérative', r.coop], ['Intrants', r.intrants]]
       .forEach(function (x) { if (x[1]) l.push(x[0] + ' : ' + x[1]); });
     if (TABLE) l.push('Table souhaitée : ' + TABLE);
+    (r.veille || []).forEach(function (x) { l.push('Prix ' + x[0][1] + ' (' + x[0][2] + ') : ' + x[1]); });
     l.push('Priorités : ' + r.prios.join(', '), 'Dépôt : ' + r.depot, 'Contact : ' + r.contact, 'Accueil : ' + (acc.length ? acc.join(' + ') : 'non merci'), 'Accord : oui');
     return l.join('\n');
   }
