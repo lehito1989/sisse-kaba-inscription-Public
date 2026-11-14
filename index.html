@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#002060">
+<title>Fiche d’inscription visiteur – Stand SOLEVO • SELAB SHOW 2026</title>
+<style>
+:root{--navy:#002060;--green:#37A028;--blue:#0B5FA1;--line:#D6DEEA;--mut:#5B6476;--bg:#F4F7FB}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:#1D2433;font-size:16px}
+header{background:#fff;border-bottom:4px solid var(--green);padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header img{height:38px}header span{font-size:13px;color:var(--mut);flex:1 1 180px}
+main{max-width:720px;margin:0 auto;padding:14px}
+h1{color:var(--navy);font-size:24px;margin:6px 0 2px}.lead{color:var(--mut);margin:0 0 12px}
+fieldset{border:1px solid var(--line);border-radius:12px;background:#fff;margin:0 0 12px;padding:10px 12px}
+legend{font-weight:800;color:var(--navy);padding:0 6px}
+.vg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;color:var(--navy)}
+input,select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:#1D2433;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}.chips b{width:100%;font-size:14px;color:var(--navy)}
+.chip{flex-direction:row;align-items:center;font-weight:500;position:relative}.chip input{position:absolute;left:0;top:0;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
+.chip span{border:1px solid var(--line);border-radius:999px;padding:9px 14px;background:#fff;color:#1D2433;cursor:pointer}
+.chip input:checked+span{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip input:focus-visible+span{outline:3px solid #9CC3E6}
+.note{font-size:13px;color:var(--mut);margin:6px 0}
+.consent{flex-direction:row;gap:10px;align-items:flex-start;font-weight:500;color:#1D2433;margin:8px 0}.consent input{margin-top:3px;width:20px;height:20px}
+.err{background:#FDECEC;color:#A11;border-radius:10px;padding:10px;font-weight:600}
+.btn{display:block;width:100%;text-align:center;font:inherit;font-weight:800;font-size:18px;padding:15px;border-radius:12px;border:0;background:var(--green);color:#fff;cursor:pointer;text-decoration:none;margin:8px 0}
+.btn.alt{background:#fff;color:var(--blue);border:2px solid var(--blue)}
+.done{background:#fff;border-radius:16px;padding:20px;text-align:center;border-top:5px solid var(--green)}
+.done h2{color:var(--navy);margin:6px 0}
+.ok{font-size:46px;color:var(--green);line-height:1}
+.off{background:#F4F9F1;border:2px dashed var(--green);border-radius:14px;padding:12px;margin:14px 0}.off h3{margin:0 0 8px;color:var(--navy)}
+.offb{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.offb button{font:inherit;font-size:17px;padding:11px 14px;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--navy);cursor:pointer}.offb button.on{border-color:var(--green);background:var(--green);color:#fff}
+.steps{text-align:left;margin:10px 0;padding-left:20px}.steps li{margin:6px 0}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:16px}
+[hidden]{display:none!important}
+.kiosk .kh{display:none}.kbtn{font:inherit;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--blue);cursor:pointer}
+body.kiosk{font-size:18px}body.kiosk #wrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;max-width:1280px;margin:0 auto;padding:10px}
+body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:18px;text-align:center;align-self:start;position:sticky;top:10px}#kqr canvas{width:100%;max-width:320px;height:auto}
+.kor{font-weight:800;color:var(--mut);text-transform:uppercase}#kqr h2,.kq h3{color:var(--navy);margin:6px 0}.kq canvas{width:260px;max-width:80%;height:auto}
+@media (max-width:900px){body.kiosk #wrap{grid-template-columns:1fr}#kqr{position:static}}
+
+</style>
+</head>
+<body>
+<header><img src="assets/solevo_big.png" alt="SOLEVO"><img src="assets/logo_sisse.png" alt="SISSÊ~KABA"><span>Stand SOLEVO Côte d’Ivoire • SELAB SHOW 2026 • Parc des sports d’Abidjan</span><button type="button" id="kbtn" class="kbtn" title="Borne digitale du stand">Mode borne</button></header>
+<div id="wrap">
+<main id="app">
+  <h1>Fiche d’inscription visiteur</h1>
+  <p class="lead">Deux minutes, puis un technicien ou un Key Account Manager SOLEVO vous reçoit.</p>
+  <form id="f" autocomplete="on" novalidate>
+    <fieldset><legend>Vous êtes</legend><div class="chips" data-r="profil"></div></fieldset>
+    <div class="vg">
+      <label>Nom et prénom *<input name="nom" autocomplete="name" required></label>
+      <label>Téléphone WhatsApp *<input name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="07 00 00 00 00" required></label>
+      <label>Localité *<input name="localite" required></label>
+      <label>E-mail (pour recevoir la présentation)<input name="email" type="email" inputmode="email" autocomplete="email"></label>
+    </div>
+    <fieldset style="margin-top:12px"><legend>Votre visite</legend><div class="chips" data-r="visite"></div>
+      <div class="vg fx-gr"><label>Nombre de personnes<input name="nb" type="number" inputmode="numeric" min="1" max="60" value="1"></label><label class="fx-dl">Coopérative ou association (nom)<input name="org"></label></div>
+      <div class="chips fx-dl"><b>Entretien souhaité en salle de conférence avec :</b></div><div class="chips fx-dl" data-r="kam"></div>
+      <p class="note fx-gr">Chaque table reçoit 4 personnes au plus. Les délégations de coopératives et les associations sont reçues en salle de conférence par les Key Account Managers.</p></fieldset>
+    <fieldset class="fx-el"><legend>Votre élevage</legend><div class="vg">
+      <label>Poulets de chair (places)<input name="chair" type="number" inputmode="numeric" min="0"></label><label>Pondeuses (têtes)<input name="pondeuse" type="number" inputmode="numeric" min="0"></label>
+      <label>Porcs produits par an<input name="porc" type="number" inputmode="numeric" min="0"></label><label>Maïs acheté par mois (t)<input name="maisMois" type="number" inputmode="decimal" min="0" step="0.5"></label></div>
+      <div class="chips"><b>Votre aliment :</b></div><div class="chips" data-r="fabrique"></div>
+      <label>Prémix ou aliment utilisé aujourd’hui (marque)<input name="fournisseur"></label></fieldset>
+    <fieldset class="fx-pr"><legend>Votre production de maïs</legend><div class="vg">
+      <label>Surface en maïs (ha)<input name="surface" type="number" inputmode="decimal" min="0" step="0.5"></label><label>Coopérative (si membre)<input name="coop"></label></div>
+      <div class="chips"><b>Achetez-vous semences et engrais ?</b></div><div class="chips" data-r="intrants"></div></fieldset>
+    <fieldset><legend>Vos priorités</legend><div class="chips" data-c="prios"></div></fieldset>
+    <div class="vg"><label>Dépôt SOLEVO le plus proche<select name="depot"></select></label></div>
+    <div class="chips"><b>Être contacté par :</b></div><div class="chips" data-r="contact"></div>
+    <label class="consent"><input type="checkbox" name="consent"> J’accepte que SOLEVO Côte d’Ivoire utilise ces informations pour me recontacter au sujet du programme SISSÊ~KABA. *</label>
+    <p class="err" id="err" hidden></p>
+    <fieldset><legend>SOLEVO vous offre à l’accueil</legend><div class="chips"><label class="chip"><input type="checkbox" name="acc" value="Eau" checked><span>💧 Une bouteille d’eau</span></label><label class="chip"><input type="checkbox" name="acc" value="Café" checked><span>☕ Un café</span></label></div></fieldset>
+    <button class="btn" type="submit">Enregistrer</button>
+    <p class="note kh" style="text-align:center">« Enregistrer » ouvre WhatsApp avec votre fiche déjà remplie : touchez simplement « Envoyer ».</p>
+  </form>
+</main>
+<aside id="kqr" hidden><div class="kor">ou</div><h2>Depuis votre téléphone</h2><canvas id="kqrc"></canvas><p>Scannez : cette même fiche s’ouvre sur votre téléphone.</p></aside></div>
+<footer>SOLEVO Côte d’Ivoire • Inscriptions WhatsApp : +225 07 77 19 09 94 • Élevage : Elvis LEHITO, Key Account Manager FEED, 07 10 47 14 02 • Maïs : Arnaud AGOHI, Key Account Manager SEED, 07 87 87 73 54</footer>
+<script src="lib/qrcode.js"></script>
+<script>
+(function () {
+  'use strict';
+  var WA = '2250777190994';
+  var L = {
+    profil: ['Éleveur', 'Producteur de maïs', 'Éleveur et producteur', 'Fabricant d’aliment', 'Autre'],
+    visite: ['Seul(e)', 'En groupe', 'Délégation de coopérative', 'Association'],
+    kam: ['Elvis LEHITO (KAM FEED)', 'Arnaud AGOHI (KAM SEED)', 'Les deux Key Account Managers'],
+    fabrique: ['Je le fabrique', 'Je l’achète complet', 'Les deux'],
+    intrants: ['Oui', 'Non', 'Parfois'],
+    contact: ['WhatsApp', 'SMS', 'Appel', 'E-mail'],
+    prios: ['Maïs moins cher', 'Prémix SOLEVO', 'Semences et engrais', 'Vendre mon maïs', 'Conseil technique', 'Financement'],
+    depot: ['Abidjan', 'Yamoussoukro', 'Agnibilékrou', 'Autre / à préciser']
+  };
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
+  function chip(type, name, v, on) { return '<label class="chip"><input type="' + type + '" name="' + name + '" value="' + esc(v) + '"' + (on ? ' checked' : '') + '><span>' + esc(v) + '</span></label>'; }
+  $$('[data-r]').forEach(function (el) { var k = el.dataset.r; el.innerHTML = L[k].map(function (v) { return chip('radio', k, v, (k === 'visite' && v === 'Seul(e)') || (k === 'contact' && v === 'WhatsApp')); }).join(''); });
+  $$('[data-c]').forEach(function (el) { var k = el.dataset.c; el.innerHTML = L[k].map(function (v) { return chip('checkbox', k, v, false); }).join(''); });
+  $('[name=depot]').innerHTML = L.depot.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('');
+  var f = $('#f');
+  var val = function (n) { var x = f.querySelector('[name="' + n + '"]:checked'); return x ? x.value : ''; };
+  function vis() {
+    var p = val('profil'), el = /leveur|Fabricant/.test(p), pr = /roducteur/.test(p);
+    $('.fx-el').hidden = !(el || !p); $('.fx-pr').hidden = !(pr || !p);
+    var v = val('visite') || 'Seul(e)', d = /Délégation|Association/.test(v);
+    $$('.fx-dl').forEach(function (x) { x.hidden = !d; }); $$('.fx-gr').forEach(function (x) { x.hidden = v === 'Seul(e)'; });
+    if (v === 'Seul(e)') f.nb.value = 1; else if (+f.nb.value < 2) f.nb.value = 2;
+  }
+  $$('[name=profil],[name=visite]').forEach(function (i) { i.addEventListener('change', vis); }); vis();
+  function digits(t) { var d = String(t || '').replace(/\D/g, ''); if (d.indexOf('00') === 0) d = d.slice(2); if (d.length === 10) d = '225' + d; return d; }
+  var PAGE = 'https://lehito1989.github.io/sisse-kaba-inscription-Public/';
+  var KIOSK = false; try { KIOSK = /borne/i.test(location.hash) || localStorage.getItem('sk_fiche_borne') === '1'; } catch (e) { KIOSK = /borne/i.test(location.hash); }
+  function qrTo(canvas, text, px) {
+    var q = qrcode(0, 'L'); q.addData(text); q.make(); var n = q.getModuleCount(), m = 4, s = Math.max(3, Math.floor(px / (n + 2 * m)));
+    canvas.width = canvas.height = (n + 2 * m) * s; var g = canvas.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, canvas.width, canvas.height); g.fillStyle = '#000';
+    for (var r = 0; r < n; r++) for (var k = 0; k < n; k++) if (q.isDark(r, k)) g.fillRect((k + m) * s, (r + m) * s, s, s);
+  }
+  function setKiosk(on) {
+    KIOSK = on; try { localStorage.setItem('sk_fiche_borne', on ? '1' : '0'); } catch (e) { /* */ }
+    document.body.classList.toggle('kiosk', on); var a = $('#kqr'); if (a) a.hidden = !on || !$('#f');
+    $('#kbtn').textContent = on ? 'Quitter le mode borne' : 'Mode borne';
+    if (on && $('#f')) { try { qrTo($('#kqrc'), PAGE, 640); } catch (e) { /* */ } if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {}); }
+  }
+  $('#kbtn').addEventListener('click', function () { setKiosk(!KIOSK); });
+  setKiosk(KIOSK);
+  var R = null, kTimer = null;
+  var TABLE = ''; try { var mt = decodeURIComponent(location.hash || '').match(/table=([^&]+)/i); if (mt) TABLE = mt[1].trim(); } catch (e) { /* */ }
+  if (TABLE) { var ld = document.querySelector('.lead'); if (ld) ld.innerHTML = 'Vous êtes à la <b>' + esc(TABLE) + '</b> du stand SOLEVO : remplissez la fiche, votre entretien suit.'; }
+  f.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var g = function (n) { return (f.elements[n] && f.elements[n].value || '').trim(); };
+    R = { profil: val('profil'), nom: g('nom'), tel: g('tel'), localite: g('localite'), email: g('email'), visite: val('visite') || 'Seul(e)', nb: Math.max(1, parseInt(g('nb'), 10) || 1), org: g('org'), kam: val('kam'),
+      chair: g('chair'), pondeuse: g('pondeuse'), porc: g('porc'), maisMois: g('maisMois'), fabrique: val('fabrique'), fournisseur: g('fournisseur'), surface: g('surface'), coop: g('coop'), intrants: val('intrants'),
+      prios: $$('[name=prios]:checked').map(function (i) { return i.value; }), depot: g('depot'), contact: val('contact') || 'WhatsApp', consent: f.consent.checked };
+    if (R.visite === 'Seul(e)') R.nb = 1;
+    var deleg = /Délégation|Association/.test(R.visite), miss = [];
+    if (!R.profil) miss.push('votre profil'); if (!R.nom) miss.push('le nom'); if (digits(R.tel).length < 11) miss.push('un téléphone valide'); if (!R.localite) miss.push('la localité');
+    if (deleg && !R.org) miss.push('le nom de la coopérative ou de l’association'); if (deleg && !R.kam) miss.push('le Key Account Manager souhaité');
+    if (!R.consent) miss.push('votre accord');
+    var err = $('#err');
+    if (miss.length) { err.hidden = false; err.textContent = 'Merci d’indiquer ' + miss.join(', ') + '.'; err.scrollIntoView({ block: 'center' }); return; }
+    err.hidden = true;
+    R.acc = $$('[name=acc]:checked').map(function (i) { return i.value; });
+    if (!KIOSK) { try { window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(fiche(R.acc)), '_blank', 'noopener'); R.sent = true; } catch (er) { /* */ } }
+    done();
+  });
+  function fiche(acc) {
+    var r = R, l = ['FICHE D’INSCRIPTION SISSÊ~KABA – Stand SOLEVO (SELAB SHOW)',
+      'Profil : ' + r.profil, 'Nom : ' + r.nom, 'Téléphone : ' + r.tel, 'Localité : ' + r.localite, 'E-mail : ' + r.email,
+      'Visite : ' + r.visite, 'Nombre de personnes : ' + r.nb];
+    if (r.org) l.push('Organisation : ' + r.org); if (r.kam) l.push('Entretien souhaité avec : ' + r.kam);
+    [['Poulets de chair', r.chair], ['Pondeuses', r.pondeuse], ['Porcs par an', r.porc], ['Maïs acheté par mois (t)', r.maisMois], ['Aliment', r.fabrique], ['Fournisseur', r.fournisseur], ['Surface maïs (ha)', r.surface], ['Coopérative', r.coop], ['Intrants', r.intrants]]
+      .forEach(function (x) { if (x[1]) l.push(x[0] + ' : ' + x[1]); });
+    if (TABLE) l.push('Table souhaitée : ' + TABLE);
+    l.push('Priorités : ' + r.prios.join(', '), 'Dépôt : ' + r.depot, 'Contact : ' + r.contact, 'Accueil : ' + (acc.length ? acc.join(' + ') : 'non merci'), 'Accord : oui');
+    return l.join('\n');
+  }
+  function done() {
+    var n = R.nb, deleg = /Délégation|Association/.test(R.visite);
+    var aq = $('#kqr'); if (aq) aq.hidden = true;
+    $('#app').innerHTML = '<div class="done"><div class="ok">✓</div><h2>Merci ' + esc(R.nom.split(/\s+/).slice(-1)[0]) + ' !</h2>' +
+      '<p>' + (deleg ? 'Votre délégation sera reçue en <b>salle de conférence SOLEVO</b> avec ' + esc(R.kam) + '.' : (TABLE ? 'Vous êtes reçu(e) à la <b>' + esc(TABLE) + '</b> (4 personnes au plus par table).' : 'Un technicien SOLEVO vous recevra à sa table (4 personnes au plus par table).')) + '</p>' +
+      '<div class="off"><h3>SOLEVO vous offre' + (n > 1 ? ' (' + n + ' personnes)' : '') + '</h3><div class="offb"><button type="button" data-a="Eau" class="on">💧 ' + (n > 1 ? n + ' bouteilles' : '1 bouteille') + ' d’eau</button><button type="button" data-a="Café" class="on">☕ ' + (n > 1 ? n + ' cafés' : '1 café') + '</button><button type="button" data-a="non">Non merci</button></div><p class="note">Servi à l’accueil SOLEVO pendant votre attente.</p></div>' +
+      (R.sent ? '<p class="ok" style="font-size:16px">WhatsApp s’est ouvert avec votre fiche : touchez « Envoyer ». Rien ne s’est ouvert ? Utilisez le bouton vert ci-dessous.</p>' : '') + '<ol class="steps"><li>' + (R.sent ? 'Dans WhatsApp, touchez « Envoyer ».' : 'Touchez le bouton vert : votre fiche s’ouvre dans WhatsApp.') + '</li><li>Envoyez le message sans le modifier.</li><li>Vous recevez votre table d’entretien par message. Présentez-vous à l’accueil du stand.</li></ol>' +
+      (KIOSK ? '<div class="kq"><h3>Scannez pour envoyer votre fiche depuis votre téléphone</h3><canvas id="kq"></canvas><p class="note">Le message WhatsApp s’ouvre déjà rempli : il suffit de l’envoyer.</p></div>' : '') +
+      '<a class="btn" id="go" target="_blank" rel="noopener">' + (KIOSK ? 'Ou envoyer depuis la borne (WhatsApp)' : 'Envoyer ma fiche par WhatsApp') + '</a><a class="btn alt" id="sms">Envoyer par SMS</a>' +
+      '<p class="note">Pas de WhatsApp ni de réseau ? Montrez cet écran à l’accueil du stand.</p><button type="button" class="btn alt" id="again">Nouvelle inscription</button></div>';
+    $$('[data-a]').forEach(function (b) { if (b.dataset.a !== 'non') b.classList.toggle('on', (R.acc || []).indexOf(b.dataset.a) >= 0); else b.classList.toggle('on', R.acc && !R.acc.length); });
+    var acc = function () { return $$('[data-a].on').map(function (b) { return b.dataset.a; }).filter(function (x) { return x !== 'non'; }); };
+    var links = function () { var t = fiche(acc()), u = 'https://wa.me/' + WA + '?text=' + encodeURIComponent(t); $('#go').href = u; $('#sms').href = 'sms:+' + WA + '?body=' + encodeURIComponent(t); if (KIOSK && $('#kq')) { try { qrTo($('#kq'), u, 700); } catch (e) { /* */ } } if (KIOSK) { clearTimeout(kTimer); kTimer = setTimeout(function () { location.reload(); }, 90000); } };
+    $$('[data-a]').forEach(function (b) { b.addEventListener('click', function () {
+      if (b.dataset.a === 'non') $$('[data-a]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      else { b.classList.toggle('on'); $('[data-a=non]').classList.remove('on'); }
+      links(); }); });
+    links(); $('#again').addEventListener('click', function () { location.reload(); }); window.scrollTo(0, 0);
+  }
+})();
+</script>
+</body>
+</html>
