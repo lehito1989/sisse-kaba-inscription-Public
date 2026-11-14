@@ -29,6 +29,7 @@ input,select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-
 .err{background:#FDECEC;color:#A11;border-radius:10px;padding:10px;font-weight:600}
 .btn{display:block;width:100%;text-align:center;font:inherit;font-weight:800;font-size:18px;padding:15px;border-radius:12px;border:0;background:var(--green);color:#fff;cursor:pointer;text-decoration:none;margin:8px 0}
 .btn.alt{background:#fff;color:var(--blue);border:2px solid var(--blue)}
+.sim{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;text-align:left}.sim h3{color:var(--navy);margin:10px 0 4px;font-size:16px}.sim .fo{color:#2E7D1F;font-weight:700;font-size:13px;margin:0 0 4px}.sim table{width:100%;border-collapse:collapse;font-size:13.5px}.sim td{padding:4px 2px;border-bottom:1px solid #E3E8EF;vertical-align:top}.sim td+td{text-align:right;font-weight:700;color:var(--navy)}.sim .ph td{font-size:12.5px;color:#5B6476}.sim .ph td+td{font-weight:600;color:#5B6476}.sim .nt{font-size:12px;color:#5B6476;font-style:italic}.done .sim{margin-top:14px}
 .done{background:#fff;border-radius:16px;padding:20px;text-align:center;border-top:5px solid var(--green)}
 .done h2{color:var(--navy);margin:6px 0}
 .ok{font-size:46px;color:var(--green);line-height:1}
@@ -72,9 +73,10 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     <fieldset class="fx-pr"><legend>Votre production de maïs</legend><div class="vg">
       <label>Surface en maïs (ha)<input name="surface" type="number" inputmode="decimal" min="0" step="0.5"></label><label>Coopérative (si membre)<input name="coop"></label></div>
       <div class="chips"><b>Achetez-vous semences et engrais ?</b></div><div class="chips" data-r="intrants"></div></fieldset>
-    <details class="veille"><summary>Veille des prix : vos prix d’achat actuels <span>(facultatif, 1 minute)</span></summary>
-      <p class="note">Aidez-nous à suivre les prix dans votre zone. Indiquez seulement ceux que vous connaissez.</p>
-      <div class="vg" id="veille"></div></details>
+    <details class="veille"><summary>Veille des prix et vos coûts avec SOLEVO <span>(facultatif, 1 minute)</span></summary>
+      <p class="note">Indiquez vos prix d’achat et vos prix de vente actuels (seulement ceux que vous connaissez) : nous calculons aussitôt vos coûts de production avec les prémix SOLEVO MG2MIX.</p>
+      <div class="vg" id="veille"></div>
+      <button type="button" class="btn alt" id="simBtn">📊 Voir mes coûts avec les prémix SOLEVO</button><div id="simOut"></div></details>
     <fieldset><legend>Vos priorités</legend><div class="chips" data-c="prios"></div></fieldset>
     <div class="vg"><label>Dépôt SOLEVO le plus proche<select name="depot"></select></label></div>
     <div class="chips"><b>Être contacté par :</b></div><div class="chips" data-r="contact"></div>
@@ -135,9 +137,48 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   }
   $('#kbtn').addEventListener('click', function () { setKiosk(!KIOSK); });
   setKiosk(KIOSK);
-  var VEILLE = [['mais', 'Maïs', 'FCFA/kg'], ['soja', 'Soja (tourteau)', 'FCFA/kg'], ['son', 'Son de blé', 'FCFA/kg'], ['coq', 'Coquillage', 'FCFA/kg'], ['huile', 'Huile rouge', 'FCFA/litre'], ['pxChair', 'Prémix chair', 'FCFA/sac'], ['pxPonte', 'Prémix ponte', 'FCFA/sac']];
+  var VEILLE = [['mais', 'Maïs', 'FCFA/kg'], ['soja', 'Soja (tourteau)', 'FCFA/kg'], ['son', 'Son de blé', 'FCFA/kg'], ['coq', 'Coquillage', 'FCFA/kg'], ['huile', 'Huile rouge', 'FCFA/litre'], ['pxChair', 'Prémix chair', 'FCFA/sac'], ['pxPonte', 'Prémix ponte', 'FCFA/sac'], ['plaq', 'Plaquette de 30 œufs (vente)', 'FCFA/plaquette'], ['poulet', 'Poulet de chair (vente)', 'FCFA/poulet']];
   var SACS = ['1', '20', '25', '50', '100', '120'];
   $('#veille').innerHTML = VEILLE.map(function (v) { var sac = /^px/.test(v[0]); return '<label>' + v[1] + ' <small style="font-weight:400;color:#5B6476">(' + v[2] + ')</small><input name="vx_' + v[0] + '" type="number" inputmode="decimal" min="0" step="any">' + (sac ? '</label><div class="sacs"><b>Sac de ' + v[1].toLowerCase() + ' :</b><div class="chips">' + SACS.map(function (k) { return chip('radio', 'sac_' + v[0], k + ' kg', false); }).join('') + '</div></div>' : '</label>'); }).join('');
+  /* ---- coûts avec les prémix SOLEVO (modèle SOLEVO recalculé sur le téléphone) ---- */
+  var SIM = null, simLoading = null;
+  function loadJs(src) { return new Promise(function (ok, ko) { var s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = function () { ko(new Error(src)); }; document.head.appendChild(s); }); }
+  function simReady() {
+    if (!simLoading) simLoading = loadJs('lib/jszip.min.js').then(function () { return loadJs('lib/engine.js'); }).then(function () { return loadJs('lib/formul.js'); }).then(function () { return loadJs('lib/formul_wb.js'); }).then(function () { return window.SKF.load(); });
+    return simLoading;
+  }
+  function veilleNow() {
+    var vx = {}; VEILLE.forEach(function (v) { var x = parseFloat(String((f.elements['vx_' + v[0]] || {}).value || '').replace(',', '.')); if (x > 0) vx[v[0]] = x; var k = val('sac_' + v[0]); if (k) vx[v[0] + 'Kg'] = parseFloat(k); });
+    return vx;
+  }
+  function simHtml(rep) {
+    var t = rep.text.split('\n'), h = '', open = false;
+    var clean = function (x) { return esc(x.replace(/[*_]/g, '')); };
+    t.forEach(function (l, i) {
+      if (i < 2) return;
+      if (/^\*(🐔|🥚)/.test(l)) { if (open) h += '</table>'; h += '<h3>' + clean(l) + '</h3>'; open = false; return; }
+      if (/^_/.test(l)) { h += '<p class="fo">' + clean(l) + '</p><table>'; open = true; return; }
+      var m = l.match(/^• (.*?) : (.*)$/); if (m && open) { h += '<tr class="' + (/FCFA\/kg •/.test(m[2]) ? 'ph' : '') + '"><td>' + clean(m[1]) + '</td><td>' + clean(m[2]) + '</td></tr>'; return; }
+      if (l && /Estimation/.test(l)) { if (open) h += '</table>'; open = false; h += '<p class="nt">' + clean(l) + '</p>'; }
+    });
+    if (open) h += '</table>';
+    return '<div class="sim">' + h + '</div>';
+  }
+  function simRun(target, who) {
+    var vx = veilleNow(), el = $(target);
+    if (!Object.keys(vx).length) { el.innerHTML = '<p class="err">Indiquez au moins un prix ci-dessus (maïs, soja, prix de vente du poulet ou de la plaquette…).</p>'; return Promise.resolve(null); }
+    el.innerHTML = '<p class="note">Calcul de vos coûts avec le modèle SOLEVO…</p>';
+    return simReady().then(function () {
+      var vf = window.SKF.inputFromVeille(vx, { chair: (f.elements.chair || {}).value, pondeuse: (f.elements.pondeuse || {}).value });
+      var res = window.SKF.compute(vf.inp); var g = function (n) { return ((f.elements[n] || {}).value || '').trim(); };
+      SIM = window.SKF.report(res, { nom: who || g('nom'), localite: g('localite'), sps: vf.sps });
+      el.innerHTML = simHtml(SIM); return SIM;
+    }).catch(function (e) { el.innerHTML = '<p class="err">Calcul indisponible pour le moment (' + esc(e.message || e) + '). Votre conseiller SOLEVO le fera avec vous.</p>'; return null; });
+  }
+  function simCalc(vx) {
+    return simReady().then(function () { var vf = window.SKF.inputFromVeille(vx, R.eff); SIM = window.SKF.report(window.SKF.compute(vf.inp), { nom: R.nom, localite: R.localite, sps: vf.sps }); return SIM; }).catch(function () { return null; });
+  }
+  $('#simBtn').addEventListener('click', function () { simRun('#simOut'); });
   var R = null, kTimer = null;
   var TABLE = ''; try { var mt = decodeURIComponent(location.hash || '').match(/table=([^&]+)/i); if (mt) TABLE = mt[1].trim(); } catch (e) { /* */ }
   if (TABLE) { var ld = document.querySelector('.lead'); if (ld) ld.innerHTML = 'Vous êtes à la <b>' + esc(TABLE) + '</b> du stand SOLEVO : remplissez la fiche, votre entretien suit.'; }
@@ -156,6 +197,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     if (miss.length) { err.hidden = false; err.textContent = 'Merci d’indiquer ' + miss.join(', ') + '.'; err.scrollIntoView({ block: 'center' }); return; }
     err.hidden = true;
     R.acc = $$('[name=acc]:checked').map(function (i) { return i.value; });
+    R.vx = veilleNow(); R.eff = { chair: R.chair, pondeuse: R.pondeuse };
     if (!KIOSK) { try { window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(fiche(R.acc)), '_blank', 'noopener'); R.sent = true; } catch (er) { /* */ } }
     done();
   });
@@ -180,7 +222,9 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
       (R.sent ? '<p class="ok" style="font-size:16px">WhatsApp s’est ouvert avec votre fiche : touchez « Envoyer ». Rien ne s’est ouvert ? Utilisez le bouton vert ci-dessous.</p>' : '') + '<ol class="steps"><li>' + (R.sent ? 'Dans WhatsApp, touchez « Envoyer ».' : 'Touchez le bouton vert : votre fiche s’ouvre dans WhatsApp.') + '</li><li>Envoyez le message sans le modifier.</li><li>Vous recevez votre table d’entretien par message. Présentez-vous à l’accueil du stand.</li></ol>' +
       (KIOSK ? '<div class="kq"><h3>Scannez pour envoyer votre fiche depuis votre téléphone</h3><canvas id="kq"></canvas><p class="note">Le message WhatsApp s’ouvre déjà rempli : il suffit de l’envoyer.</p></div>' : '') +
       '<a class="btn" id="go" target="_blank" rel="noopener">' + (KIOSK ? 'Ou envoyer depuis la borne (WhatsApp)' : 'Envoyer ma fiche par WhatsApp') + '</a><a class="btn alt" id="sms">Envoyer par SMS</a>' +
-      '<p class="note">Pas de WhatsApp ni de réseau ? Montrez cet écran à l’accueil du stand.</p><button type="button" class="btn alt" id="again">Nouvelle inscription</button></div>';
+      '<p class="note">Pas de WhatsApp ni de réseau ? Montrez cet écran à l’accueil du stand.</p>' +
+      (R.vx && Object.keys(R.vx).length ? '<div id="simDone"></div><div id="simSelf" hidden><a class="btn alt" id="simWa" target="_blank" rel="noopener">Garder mes coûts sur mon WhatsApp</a>' + (R.email ? '<a class="btn alt" id="simMail">Les recevoir par e-mail</a>' : '') + '<p class="note">SOLEVO vous envoie aussi ces résultats par e-mail et WhatsApp dès réception de votre fiche, puis la simulation validée après votre entretien.</p></div>' : '') +
+      '<button type="button" class="btn alt" id="again">Nouvelle inscription</button></div>';
     $$('[data-a]').forEach(function (b) { if (b.dataset.a !== 'non') b.classList.toggle('on', (R.acc || []).indexOf(b.dataset.a) >= 0); else b.classList.toggle('on', R.acc && !R.acc.length); });
     var acc = function () { return $$('[data-a].on').map(function (b) { return b.dataset.a; }).filter(function (x) { return x !== 'non'; }); };
     var links = function () { var t = fiche(acc()), u = 'https://wa.me/' + WA + '?text=' + encodeURIComponent(t); $('#go').href = u; $('#sms').href = 'sms:+' + WA + '?body=' + encodeURIComponent(t); if (KIOSK && $('#kq')) { try { qrTo($('#kq'), u, 700); } catch (e) { /* */ } } if (KIOSK) { clearTimeout(kTimer); kTimer = setTimeout(function () { location.reload(); }, 90000); } };
@@ -189,6 +233,11 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
       else { b.classList.toggle('on'); $('[data-a=non]').classList.remove('on'); }
       links(); }); });
     links(); $('#again').addEventListener('click', function () { location.reload(); }); window.scrollTo(0, 0);
+    if ($('#simDone')) {
+      var sw = function (rep) { if (!rep) return; var t = rep.text; $('#simSelf').hidden = false; $('#simWa').href = 'https://wa.me/' + digits(R.tel) + '?text=' + encodeURIComponent(t); if ($('#simMail')) $('#simMail').href = 'mailto:' + encodeURIComponent(R.email) + '?subject=' + encodeURIComponent('SOLEVO – Mes coûts avec les prémix MG2MIX') + '&body=' + encodeURIComponent(t.replace(/[*_]/g, '')); };
+      if (SIM && R.simFor === JSON.stringify(R.vx)) { $('#simDone').innerHTML = simHtml(SIM); sw(SIM); }
+      else simCalc(R.vx).then(function (rep) { if (rep) { $('#simDone').innerHTML = simHtml(rep); sw(rep); } });
+    }
   }
 })();
 </script>
