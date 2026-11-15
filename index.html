@@ -137,7 +137,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   }
   $('#kbtn').addEventListener('click', function () { setKiosk(!KIOSK); });
   setKiosk(KIOSK);
-  var VEILLE = [['mais', 'Maïs', 'FCFA/kg'], ['soja', 'Soja (tourteau)', 'FCFA/kg'], ['son', 'Son de blé', 'FCFA/kg'], ['coq', 'Coquillage', 'FCFA/kg'], ['huile', 'Huile rouge', 'FCFA/litre'], ['pxChair', 'Prémix chair', 'FCFA/sac'], ['pxPonte', 'Prémix ponte', 'FCFA/sac'], ['plaq', 'Plaquette de 30 œufs (vente)', 'FCFA/plaquette'], ['poulet', 'Poulet de chair (vente)', 'FCFA/poulet']];
+  var VEILLE = [['mais', 'Maïs', 'FCFA/kg'], ['soja', 'Soja (tourteau)', 'FCFA/kg'], ['son', 'Son de blé', 'FCFA/kg'], ['coq', 'Coquillage', 'FCFA/kg'], ['huile', 'Huile rouge', 'FCFA/litre'], ['pxChair', 'Prémix chair', 'FCFA/sac'], ['pxPonte', 'Prémix ponte', 'FCFA/sac'], ['pxPorc', 'CMV Porc MG2MIX', 'FCFA/sac'], ['plaq', 'Plaquette de 30 œufs (vente)', 'FCFA/plaquette'], ['poulet', 'Poulet de chair (vente)', 'FCFA/poulet']];
   var SACS = ['1', '20', '25', '50', '100', '120'];
   $('#veille').innerHTML = VEILLE.map(function (v) { var sac = /^px/.test(v[0]); return '<label>' + v[1] + ' <small style="font-weight:400;color:#5B6476">(' + v[2] + ')</small><input name="vx_' + v[0] + '" type="number" inputmode="decimal" min="0" step="any">' + (sac ? '</label><div class="sacs"><b>Sac de ' + v[1].toLowerCase() + ' :</b><div class="chips">' + SACS.map(function (k) { return chip('radio', 'sac_' + v[0], k + ' kg', false); }).join('') + '</div></div>' : '</label>'); }).join('');
   /* ---- coûts avec les prémix SOLEVO (modèle SOLEVO recalculé sur le téléphone) ---- */
@@ -156,7 +156,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     var clean = function (x) { return esc(x.replace(/[*_]/g, '')); };
     t.forEach(function (l, i) {
       if (i < 2) return;
-      if (/^\*(🐔|🥚)/.test(l)) { if (open) h += '</table>'; h += '<h3>' + clean(l) + '</h3>'; open = false; return; }
+      if (/^\*(🐔|🥚|🐖)/.test(l)) { if (open) h += '</table>'; h += '<h3>' + clean(l) + '</h3>'; open = false; return; }
       if (/^_/.test(l)) { h += '<p class="fo">' + clean(l) + '</p><table>'; open = true; return; }
       var m = l.match(/^• (.*?) : (.*)$/); if (m && open) { h += '<tr class="' + (/FCFA\/kg •/.test(m[2]) ? 'ph' : '') + '"><td>' + clean(m[1]) + '</td><td>' + clean(m[2]) + '</td></tr>'; return; }
       if (l && /Estimation/.test(l)) { if (open) h += '</table>'; open = false; h += '<p class="nt">' + clean(l) + '</p>'; }
@@ -169,14 +169,14 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     if (!Object.keys(vx).length) { el.innerHTML = '<p class="err">Indiquez au moins un prix ci-dessus (maïs, soja, prix de vente du poulet ou de la plaquette…).</p>'; return Promise.resolve(null); }
     el.innerHTML = '<p class="note">Calcul de vos coûts avec le modèle SOLEVO…</p>';
     return simReady().then(function () {
-      var vf = window.SKF.inputFromVeille(vx, { chair: (f.elements.chair || {}).value, pondeuse: (f.elements.pondeuse || {}).value });
+      var vf = window.SKF.inputFromVeille(vx, { chair: (f.elements.chair || {}).value, pondeuse: (f.elements.pondeuse || {}).value, porc: (f.elements.porc || {}).value });
       var res = window.SKF.compute(vf.inp); var g = function (n) { return ((f.elements[n] || {}).value || '').trim(); };
-      SIM = window.SKF.report(res, { nom: who || g('nom'), localite: g('localite'), sps: vf.sps });
+      SIM = window.SKF.report(res, { nom: who || g('nom'), localite: g('localite'), sps: vf.sps, porc: vf.porc, porcN: vf.porcN });
       el.innerHTML = simHtml(SIM); return SIM;
     }).catch(function (e) { el.innerHTML = '<p class="err">Calcul indisponible pour le moment (' + esc(e.message || e) + '). Votre conseiller SOLEVO le fera avec vous.</p>'; return null; });
   }
   function simCalc(vx) {
-    return simReady().then(function () { var vf = window.SKF.inputFromVeille(vx, R.eff); SIM = window.SKF.report(window.SKF.compute(vf.inp), { nom: R.nom, localite: R.localite, sps: vf.sps }); return SIM; }).catch(function () { return null; });
+    return simReady().then(function () { var vf = window.SKF.inputFromVeille(vx, R.eff); SIM = window.SKF.report(window.SKF.compute(vf.inp), { nom: R.nom, localite: R.localite, sps: vf.sps, porc: vf.porc, porcN: vf.porcN }); return SIM; }).catch(function () { return null; });
   }
   $('#simBtn').addEventListener('click', function () { simRun('#simOut'); });
   var R = null, kTimer = null;
@@ -197,7 +197,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     if (miss.length) { err.hidden = false; err.textContent = 'Merci d’indiquer ' + miss.join(', ') + '.'; err.scrollIntoView({ block: 'center' }); return; }
     err.hidden = true;
     R.acc = $$('[name=acc]:checked').map(function (i) { return i.value; });
-    R.vx = veilleNow(); R.eff = { chair: R.chair, pondeuse: R.pondeuse };
+    R.vx = veilleNow(); R.eff = { chair: R.chair, pondeuse: R.pondeuse, porc: R.porc };
     if (!KIOSK) { try { window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(fiche(R.acc)), '_blank', 'noopener'); R.sent = true; } catch (er) { /* */ } }
     done();
   });
