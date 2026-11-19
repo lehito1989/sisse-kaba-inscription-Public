@@ -38,7 +38,7 @@ input,select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-
 .steps{text-align:left;margin:10px 0;padding-left:20px}.steps li{margin:6px 0}
 footer{text-align:center;color:var(--mut);font-size:12px;padding:16px}
 [hidden]{display:none!important}
-.alq{margin:12px 0 4px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:#fff}.alq>b{color:var(--navy)}.alq .note{margin:4px 0 8px}.alo{margin-top:6px;padding:8px 10px;border-radius:10px;background:#EAF6E6;color:#1E5E1A;font-size:15px;line-height:1.4}.alo.warn{background:#FFF4E0;color:#7A4B00;border:1px solid #EE9B1D}
+.alq{margin:12px 0 4px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:#fff}.alq>b{color:var(--navy)}.alq .note{margin:4px 0 8px}.alo{margin-top:6px;padding:8px 10px;border-radius:10px;background:#EAF6E6;color:#1E5E1A;font-size:15px;line-height:1.4}.geo{display:block;margin-top:4px;font-size:13px;font-weight:400;color:#1E5E1A}.alo.warn{background:#FFF4E0;color:#7A4B00;border:1px solid #EE9B1D}
 .veille{border:1px solid var(--line);border-radius:12px;background:#fff;margin:0 0 12px;padding:10px 12px}.veille summary{cursor:pointer;font-weight:800;color:var(--navy)}.veille summary span{font-weight:400;color:var(--mut);font-size:13px}.veille .vg{margin-top:8px}.sacs{grid-column:1/-1;margin:-4px 0 4px}.sacs b{font-size:13px;color:var(--navy)}.sacs .chip span{padding:7px 11px}
 .kiosk .kh{display:none}.kbtn{font:inherit;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--blue);cursor:pointer}
 body.kiosk{font-size:18px}body.kiosk #wrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;max-width:1280px;margin:0 auto;padding:10px}
@@ -59,7 +59,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     <div class="vg">
       <label>Nom et prénom *<input name="nom" autocomplete="name" required></label>
       <label>Téléphone WhatsApp *<input name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="07 00 00 00 00" required></label>
-      <label>Localité *<input name="localite" required></label>
+      <label>Localité *<input name="localite" required list="villesCI"><span id="geoOut" class="geo" hidden></span></label><datalist id="villesCI"></datalist>
       <label>E-mail (pour recevoir la présentation)<input name="email" type="email" inputmode="email" autocomplete="email"></label>
     </div>
     <fieldset style="margin-top:12px"><legend>Votre visite</legend><div class="chips" data-r="visite"></div>
@@ -118,7 +118,59 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   $$('[data-r]').forEach(function (el) { var k = el.dataset.r; el.innerHTML = L[k].map(function (v) { return chip('radio', k, v, (k === 'visite' && v === 'Seul(e)') || (k === 'contact' && v === 'WhatsApp')); }).join(''); });
   $$('[data-c]').forEach(function (el) { var k = el.dataset.c; el.innerHTML = L[k].map(function (v) { return chip('checkbox', k, v, false); }).join(''); });
   $('[name=depot]').innerHTML = L.depot.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('');
+  /* principales localités de Côte d’Ivoire : [nom, région ou district, latitude, longitude] (coordonnées approchées) */
+  var GEO_CI = [
+    ['Abidjan', 'District autonome d’Abidjan', 5.36, -4.01], ['Anyama', 'District autonome d’Abidjan', 5.49, -4.05], ['Bingerville', 'District autonome d’Abidjan', 5.36, -3.89], ['Songon', 'District autonome d’Abidjan', 5.32, -4.25], ['Abobo', 'District autonome d’Abidjan', 5.42, -4.02], ['Yopougon', 'District autonome d’Abidjan', 5.34, -4.08], ['Cocody', 'District autonome d’Abidjan', 5.35, -3.99], ['Port-Bouët', 'District autonome d’Abidjan', 5.26, -3.93],
+    ['Yamoussoukro', 'District autonome de Yamoussoukro', 6.82, -5.28], ['Attiégouakro', 'District autonome de Yamoussoukro', 6.78, -5.12],
+    ['Bouaké', 'Gbêkê', 7.69, -5.03], ['Béoumi', 'Gbêkê', 7.67, -5.58], ['Sakassou', 'Gbêkê', 7.45, -5.29], ['Botro', 'Gbêkê', 7.85, -5.31],
+    ['Daloa', 'Haut-Sassandra', 6.88, -6.45], ['Issia', 'Haut-Sassandra', 6.49, -6.59], ['Vavoua', 'Haut-Sassandra', 7.38, -6.48], ['Zoukougbeu', 'Haut-Sassandra', 6.76, -6.86],
+    ['San-Pédro', 'San-Pédro', 4.75, -6.64], ['Tabou', 'San-Pédro', 4.42, -7.35], ['Sassandra', 'Gbôklé', 4.95, -6.08], ['Fresco', 'Gbôklé', 5.08, -5.57],
+    ['Soubré', 'Nawa', 5.79, -6.61], ['Méagui', 'Nawa', 5.40, -6.56], ['Buyo', 'Nawa', 6.25, -7.00], ['Gueyo', 'Nawa', 5.69, -6.07],
+    ['Gagnoa', 'Gôh', 6.13, -5.95], ['Oumé', 'Gôh', 6.38, -5.42], ['Divo', 'Lôh-Djiboua', 5.84, -5.36], ['Lakota', 'Lôh-Djiboua', 5.85, -5.68], ['Guitry', 'Lôh-Djiboua', 5.52, -5.24],
+    ['Man', 'Tonkpi', 7.41, -7.55], ['Danané', 'Tonkpi', 7.26, -8.15], ['Biankouma', 'Tonkpi', 7.74, -7.61], ['Zouan-Hounien', 'Tonkpi', 6.92, -8.21],
+    ['Duékoué', 'Guémon', 6.74, -7.35], ['Bangolo', 'Guémon', 7.01, -7.49], ['Guiglo', 'Cavally', 6.54, -7.49], ['Bloléquin', 'Cavally', 6.57, -8.00], ['Toulépleu', 'Cavally', 6.58, -8.41],
+    ['Touba', 'Bafing', 8.28, -7.68], ['Odienné', 'Kabadougou', 9.51, -7.56], ['Minignan', 'Folon', 9.99, -7.84], ['Séguéla', 'Worodougou', 7.96, -6.67], ['Kani', 'Worodougou', 8.48, -6.61], ['Mankono', 'Béré', 8.06, -6.19],
+    ['Korhogo', 'Poro', 9.46, -5.63], ['Sinématiali', 'Poro', 9.58, -5.38], ['M’Bengué', 'Poro', 10.00, -5.90], ['Ferkessédougou', 'Tchologo', 9.59, -5.19], ['Ouangolodougou', 'Tchologo', 9.97, -5.15], ['Kong', 'Tchologo', 9.15, -4.61],
+    ['Boundiali', 'Bagoué', 9.52, -6.49], ['Tengréla', 'Bagoué', 10.48, -6.41], ['Katiola', 'Hambol', 8.14, -5.10], ['Dabakala', 'Hambol', 8.36, -4.43], ['Niakaramandougou', 'Hambol', 8.66, -5.29],
+    ['Bondoukou', 'Gontougo', 8.04, -2.80], ['Tanda', 'Gontougo', 7.80, -3.17], ['Bouna', 'Bounkani', 9.27, -3.00],
+    ['Abengourou', 'Indénié-Djuablin', 6.73, -3.49], ['Agnibilékrou', 'Indénié-Djuablin', 7.13, -3.20], ['Bettié', 'Indénié-Djuablin', 6.07, -3.40],
+    ['Aboisso', 'Sud-Comoé', 5.47, -3.21], ['Adiaké', 'Sud-Comoé', 5.29, -3.30], ['Assinie', 'Sud-Comoé', 5.13, -3.28], ['Grand-Bassam', 'Sud-Comoé', 5.20, -3.74], ['Bonoua', 'Sud-Comoé', 5.27, -3.59],
+    ['Adzopé', 'La Mé', 6.10, -3.86], ['Akoupé', 'La Mé', 6.38, -3.89], ['Alépé', 'La Mé', 5.50, -3.66], ['Yakassé-Attobrou', 'La Mé', 6.18, -3.65], ['Yakassé-Mé', 'La Mé', 5.98, -3.77],
+    ['Agboville', 'Agnéby-Tiassa', 5.93, -4.22], ['Tiassalé', 'Agnéby-Tiassa', 5.90, -4.83], ['Sikensi', 'Agnéby-Tiassa', 5.68, -4.58], ['Taabo', 'Agnéby-Tiassa', 6.22, -5.12],
+    ['Dabou', 'Grands-Ponts', 5.32, -4.38], ['Jacqueville', 'Grands-Ponts', 5.21, -4.42], ['Grand-Lahou', 'Grands-Ponts', 5.14, -5.02],
+    ['Daoukro', 'Iffou', 7.06, -3.96], ['M’Bahiakro', 'Iffou', 7.45, -4.34], ['Prikro', 'Iffou', 7.65, -3.99], ['Dimbokro', 'N’Zi', 6.65, -4.71], ['Bocanda', 'N’Zi', 7.06, -4.50],
+    ['Bongouanou', 'Moronou', 6.65, -4.20], ['Arrah', 'Moronou', 6.67, -3.97], ['M’Batto', 'Moronou', 6.47, -4.36],
+    ['Toumodi', 'Bélier', 6.56, -5.02], ['Tiébissou', 'Bélier', 7.16, -5.22], ['Didiévi', 'Bélier', 7.13, -4.90], ['Djékanou', 'Bélier', 6.48, -5.10],
+    ['Bouaflé', 'Marahoué', 6.99, -5.74], ['Zuénoula', 'Marahoué', 7.43, -6.05], ['Sinfra', 'Marahoué', 6.62, -5.91]
+  ];
+  /* dépôts SOLEVO FEED : actifs et en installation */
+  var DEPOTS_GEO = [['Abidjan', 5.36, -4.01, 1], ['Yamoussoukro', 6.82, -5.28, 1], ['Agnibilékrou', 7.13, -3.20, 1], ['San-Pédro', 4.75, -6.64, 0], ['Gagnoa', 6.13, -5.95, 0], ['Man', 7.41, -7.55, 0], ['Korhogo', 9.46, -5.63, 0]];
+  var GEO_ALIAS = { 'agnibilekro': 'Agnibilékrou', 'san pedro': 'San-Pédro', 'sanpedro': 'San-Pédro', 'ferke': 'Ferkessédougou', 'yakro': 'Yamoussoukro', 'bassam': 'Grand-Bassam', 'niakara': 'Niakaramandougou', 'ouangolo': 'Ouangolodougou' };
+  function geoKey(x) { return String(x || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim(); }
+  function geoFind(loc) {
+    var k = geoKey(loc); if (!k) return null;
+    var byKey = function (key) { for (var i = 0; i < GEO_CI.length; i++) if (geoKey(GEO_CI[i][0]) === key) return GEO_CI[i]; return null; };
+    var hit = byKey(k) || (GEO_ALIAS[k] ? byKey(geoKey(GEO_ALIAS[k])) : null);
+    if (!hit) { var best = null; GEO_CI.forEach(function (g) { var gk = geoKey(g[0]); if ((' ' + k + ' ').indexOf(' ' + gk + ' ') >= 0 && (!best || gk.length > geoKey(best[0]).length)) best = g; }); hit = best; }
+    if (!hit) for (var a in GEO_ALIAS) if ((' ' + k + ' ').indexOf(' ' + a + ' ') >= 0) { hit = byKey(geoKey(GEO_ALIAS[a])); break; }
+    if (!hit) return null;
+    var km = function (d) { var R = 6371, toR = Math.PI / 180, dLa = (d[1] - hit[2]) * toR, dLo = (d[2] - hit[3]) * toR, a = Math.sin(dLa / 2) * Math.sin(dLa / 2) + Math.cos(hit[2] * toR) * Math.cos(d[1] * toR) * Math.sin(dLo / 2) * Math.sin(dLo / 2); return 2 * R * Math.asin(Math.sqrt(a)); };
+    var D = DEPOTS_GEO.map(function (d) { return { nom: d[0], actif: !!d[3], km: Math.round(km(d)) }; }).sort(function (a, b) { return a.km - b.km; });
+    var act = D.filter(function (d) { return d.actif; })[0], fut = D[0].actif ? null : D[0];
+    return { ville: hit[0], region: hit[1], depot: act.nom, km: act.km, futur: fut };
+  }
+
   var f = $('#f');
+  $('#villesCI').innerHTML = GEO_CI.map(function (g) { return '<option value="' + esc(g[0]) + '">'; }).join('');
+  var depotTouched = false; $('[name=depot]').addEventListener('change', function () { depotTouched = true; });
+  function geoShow() {
+    var g = geoFind(f.localite.value), o = $('#geoOut'); if (!o) return;
+    if (!g) { o.hidden = true; return; }
+    o.hidden = false;
+    o.innerHTML = 'Région : <b>' + esc(g.region) + '</b> • dépôt SOLEVO le plus proche : <b>' + esc(g.depot) + '</b> (≈ ' + g.km + ' km)' + (g.futur ? ' • dépôt de ' + esc(g.futur.nom) + ' en installation à ≈ ' + g.futur.km + ' km' : '');
+    if (!depotTouched) { var sel = f.depot; for (var i = 0; i < sel.options.length; i++) if (sel.options[i].value === g.depot) sel.selectedIndex = i; }
+  }
+  f.localite.addEventListener('input', geoShow); f.localite.addEventListener('change', geoShow);
   var val = function (n) { var x = f.querySelector('[name="' + n + '"]:checked'); return x ? x.value : ''; };
   function vis() {
     var p = val('profil'), el = /leveur|Fabricant/.test(p), pr = /roducteur/.test(p);
@@ -237,7 +289,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     var g = function (n) { return (f.elements[n] && f.elements[n].value || '').trim(); };
     R = { profil: val('profil'), nom: g('nom'), tel: g('tel'), localite: g('localite'), email: g('email'), visite: val('visite') || 'Seul(e)', nb: Math.max(1, parseInt(g('nb'), 10) || 1), org: g('org'), kam: val('kam'),
       chair: g('chair'), pondeuse: g('pondeuse'), porc: g('porc'), maisMois: g('maisMois'), fabrique: val('fabrique'), fournisseur: g('fournisseur'), surface: g('surface'), coop: g('coop'), intrants: val('intrants'),
-      prios: $$('[name=prios]:checked').map(function (i) { return i.value; }), depot: g('depot'), contact: val('contact') || 'WhatsApp', consent: f.consent.checked, alim: alimCalc(), prod: /roducteur/.test(val('profil')) ? prodCalc() : null, veille: VEILLE.map(function (v) { return [v, g('vx_' + v[0]), (val('sac_' + v[0]) || '').replace(' kg', '')]; }).filter(function (x) { return x[1]; }) };
+      geo: geoFind(g('localite')), prios: $$('[name=prios]:checked').map(function (i) { return i.value; }), depot: g('depot'), contact: val('contact') || 'WhatsApp', consent: f.consent.checked, alim: alimCalc(), prod: /roducteur/.test(val('profil')) ? prodCalc() : null, veille: VEILLE.map(function (v) { return [v, g('vx_' + v[0]), (val('sac_' + v[0]) || '').replace(' kg', '')]; }).filter(function (x) { return x[1]; }) };
     if (R.visite === 'Seul(e)') R.nb = 1;
     var deleg = /Délégation|Association/.test(R.visite), miss = [];
     if (!R.profil) miss.push('votre profil'); if (!R.nom) miss.push('le nom'); if (digits(R.tel).length < 11) miss.push('un téléphone valide'); if (!R.localite) miss.push('la localité');
@@ -261,6 +313,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     if (r.org) l.push('Organisation : ' + r.org); if (r.kam) l.push('Entretien souhaité avec : ' + r.kam);
     [['Poulets de chair', r.chair], ['Pondeuses', r.pondeuse], ['Porcs par an', r.porc], ['Maïs acheté par mois (t)', r.maisMois], ['Aliment', r.fabrique], ['Fournisseur', r.fournisseur], ['Surface maïs (ha)', r.surface], ['Coopérative', r.coop], ['Intrants', r.intrants]]
       .forEach(function (x) { if (x[1]) l.push(x[0] + ' : ' + x[1]); });
+    if (r.geo) l.push('Région : ' + r.geo.region, 'Dépôt le plus proche (calculé) : ' + r.geo.depot + ' (≈ ' + r.geo.km + ' km)');
     if (r.alim) l.push('Aliment utilisé : ' + r.alim.txt, 'Aliment / an (t) : ' + nf(r.alim.an, 1), 'Besoin en maïs / an (t) : ' + nf(r.alim.mais, 1));
     if (r.prod) l.push('Maïs livrable estimé (t) : ' + nf(r.prod.t, 1), 'Gain estimé SISSÊ~KABA (FCFA/campagne) : ' + nf(Math.round(r.prod.gain / 1000) * 1000, 0));
     if (r.alim && r.alimEcart != null) l.push('Contrôle maïs : écart de ' + (r.alimEcart > 0 ? '+' : '') + r.alimEcart + ' % avec l’effectif, confirmé par le visiteur');
