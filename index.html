@@ -38,6 +38,7 @@ input,select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-
 .steps{text-align:left;margin:10px 0;padding-left:20px}.steps li{margin:6px 0}
 footer{text-align:center;color:var(--mut);font-size:12px;padding:16px}
 [hidden]{display:none!important}
+.alq{margin:12px 0 4px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:#fff}.alq>b{color:var(--navy)}.alq .note{margin:4px 0 8px}.alo{margin-top:6px;padding:8px 10px;border-radius:10px;background:#EAF6E6;color:#1E5E1A;font-size:15px;line-height:1.4}
 .veille{border:1px solid var(--line);border-radius:12px;background:#fff;margin:0 0 12px;padding:10px 12px}.veille summary{cursor:pointer;font-weight:800;color:var(--navy)}.veille summary span{font-weight:400;color:var(--mut);font-size:13px}.veille .vg{margin-top:8px}.sacs{grid-column:1/-1;margin:-4px 0 4px}.sacs b{font-size:13px;color:var(--navy)}.sacs .chip span{padding:7px 11px}
 .kiosk .kh{display:none}.kbtn{font:inherit;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--blue);cursor:pointer}
 body.kiosk{font-size:18px}body.kiosk #wrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;max-width:1280px;margin:0 auto;padding:10px}
@@ -68,6 +69,12 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     <fieldset class="fx-el"><legend>Votre élevage</legend><div class="vg">
       <label>Poulets de chair (places)<input name="chair" type="number" inputmode="numeric" min="0"></label><label>Pondeuses (têtes)<input name="pondeuse" type="number" inputmode="numeric" min="0"></label>
       <label>Porcs produits par an<input name="porc" type="number" inputmode="numeric" min="0"></label><label>Maïs acheté par mois (t)<input name="maisMois" type="number" inputmode="decimal" min="0" step="0.5"></label></div>
+      <div class="alq"><b>Quantité d’aliment utilisée pour nourrir vos animaux</b>
+        <p class="note">Cette évaluation nous permet de calculer votre besoin réel en maïs sur l’année, afin que les producteurs SISSÊ~KABA cultivent assez de maïs pour vous livrer toute l’année.</p>
+        <div class="vg"><label>Quantité d’aliment<input name="alimQ" type="number" inputmode="decimal" min="0" step="any" placeholder="ex. 20"></label>
+          <label>Unité<select name="alimU"><option>sacs de 50 kg</option><option>sacs de 25 kg</option><option>kg</option><option>tonnes</option></select></label>
+          <label>Période<select name="alimP"><option>par jour</option><option selected>par semaine</option><option>par mois</option><option>par an</option></select></label></div>
+        <div id="alimOut" class="alo" hidden></div></div>
       <div class="chips"><b>Votre aliment :</b></div><div class="chips" data-r="fabrique"></div>
       <label>Prémix ou aliment utilisé aujourd’hui (marque)<input name="fournisseur"></label></fieldset>
     <fieldset class="fx-pr"><legend>Votre production de maïs</legend><div class="vg">
@@ -121,6 +128,22 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     if (v === 'Seul(e)') f.nb.value = 1; else if (+f.nb.value < 2) f.nb.value = 2;
   }
   $$('[name=profil],[name=visite]').forEach(function (i) { i.addEventListener('change', vis); }); vis();
+  /* besoin réel en maïs : le maïs représente 60 % de l’aliment fini */
+  var TX_MAIS = 0.6, ALIM_U = { 'sacs de 50 kg': 0.05, 'sacs de 25 kg': 0.025, 'kg': 0.001, 'tonnes': 1 }, ALIM_P = { 'par jour': 365, 'par semaine': 52, 'par mois': 12, 'par an': 1 };
+  function nf(x, d) { return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '\u202f').replace(/(,\d*?)0+$/, '$1').replace(/,$/, ''); }
+  function alimCalc() {
+    var q = parseFloat(String(f.alimQ.value || '').replace(',', '.'));
+    if (!(q > 0)) return null;
+    var an = q * (ALIM_U[f.alimU.value] || 0) * (ALIM_P[f.alimP.value] || 0);
+    return { txt: nf(q, 2) + ' ' + f.alimU.value + ' ' + f.alimP.value, an: an, mais: an * TX_MAIS };
+  }
+  function alimShow() {
+    var a = alimCalc(), o = $('#alimOut'); if (!o) return;
+    if (!a) { o.hidden = true; return; }
+    o.hidden = false;
+    o.innerHTML = 'Aliment utilisé : <b>' + nf(a.an, 1) + ' t par an</b>.<br>Votre besoin réel en maïs (60 % de l’aliment fini) : <b>' + nf(a.mais, 1) + ' t par an</b>, soit ' + nf(a.mais / 12, 2) + ' t par mois.';
+  }
+  ['alimQ', 'alimU', 'alimP'].forEach(function (n) { f.elements[n].addEventListener('input', alimShow); f.elements[n].addEventListener('change', alimShow); });
   function digits(t) { var d = String(t || '').replace(/\D/g, ''); if (d.indexOf('00') === 0) d = d.slice(2); if (d.length === 10) d = '225' + d; return d; }
   var PAGE = 'https://lehito1989.github.io/sisse-kaba-inscription-Public/';
   var KIOSK = false; try { KIOSK = /borne/i.test(location.hash) || localStorage.getItem('sk_fiche_borne') === '1'; } catch (e) { KIOSK = /borne/i.test(location.hash); }
@@ -187,7 +210,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     var g = function (n) { return (f.elements[n] && f.elements[n].value || '').trim(); };
     R = { profil: val('profil'), nom: g('nom'), tel: g('tel'), localite: g('localite'), email: g('email'), visite: val('visite') || 'Seul(e)', nb: Math.max(1, parseInt(g('nb'), 10) || 1), org: g('org'), kam: val('kam'),
       chair: g('chair'), pondeuse: g('pondeuse'), porc: g('porc'), maisMois: g('maisMois'), fabrique: val('fabrique'), fournisseur: g('fournisseur'), surface: g('surface'), coop: g('coop'), intrants: val('intrants'),
-      prios: $$('[name=prios]:checked').map(function (i) { return i.value; }), depot: g('depot'), contact: val('contact') || 'WhatsApp', consent: f.consent.checked, veille: VEILLE.map(function (v) { return [v, g('vx_' + v[0]), (val('sac_' + v[0]) || '').replace(' kg', '')]; }).filter(function (x) { return x[1]; }) };
+      prios: $$('[name=prios]:checked').map(function (i) { return i.value; }), depot: g('depot'), contact: val('contact') || 'WhatsApp', consent: f.consent.checked, alim: alimCalc(), veille: VEILLE.map(function (v) { return [v, g('vx_' + v[0]), (val('sac_' + v[0]) || '').replace(' kg', '')]; }).filter(function (x) { return x[1]; }) };
     if (R.visite === 'Seul(e)') R.nb = 1;
     var deleg = /Délégation|Association/.test(R.visite), miss = [];
     if (!R.profil) miss.push('votre profil'); if (!R.nom) miss.push('le nom'); if (digits(R.tel).length < 11) miss.push('un téléphone valide'); if (!R.localite) miss.push('la localité');
@@ -208,6 +231,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     if (r.org) l.push('Organisation : ' + r.org); if (r.kam) l.push('Entretien souhaité avec : ' + r.kam);
     [['Poulets de chair', r.chair], ['Pondeuses', r.pondeuse], ['Porcs par an', r.porc], ['Maïs acheté par mois (t)', r.maisMois], ['Aliment', r.fabrique], ['Fournisseur', r.fournisseur], ['Surface maïs (ha)', r.surface], ['Coopérative', r.coop], ['Intrants', r.intrants]]
       .forEach(function (x) { if (x[1]) l.push(x[0] + ' : ' + x[1]); });
+    if (r.alim) l.push('Aliment utilisé : ' + r.alim.txt, 'Aliment / an (t) : ' + nf(r.alim.an, 1), 'Besoin en maïs / an (t) : ' + nf(r.alim.mais, 1));
     if (TABLE) l.push('Table souhaitée : ' + TABLE);
     (r.veille || []).forEach(function (x) { l.push('Prix ' + x[0][1] + ' (' + x[0][2] + ') : ' + x[1]); if (x[2]) l.push('Sac ' + x[0][1] + ' (kg) : ' + x[2]); });
     l.push('Priorités : ' + r.prios.join(', '), 'Dépôt : ' + r.depot, 'Contact : ' + r.contact, 'Accueil : ' + (acc.length ? acc.join(' + ') : 'non merci'), 'Accord : oui');
