@@ -1,0 +1,14 @@
+{
+  "maj": "2026-11-19",
+  "scenario": "Scénario 2 : 500 t, croissance 10 %/an",
+  "P": 100,
+  "tHa": 3.42,
+  "plus": 0.15,
+  "panier": 195000,
+  "txMais": 0.6,
+  "kgPoulet": 4,
+  "cycles": 6,
+  "pondKgJour": 0.11,
+  "kgPorc": 250,
+  "ecartMax": 0.5
+}

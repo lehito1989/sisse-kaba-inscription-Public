@@ -149,9 +149,16 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   /* gain estimé du producteur (hypothèses SISSÊ~KABA : rendement utile 3,42 t/ha, prix bord champ de référence 100 FCFA/kg, +15 %, intrants ≈ 195 000 FCFA/ha) */
   var PROD = { tHa: 3.42, P: 100, plus: 0.15, panier: 195000 };
   function prodCalc() { var ha = num('surface'); if (!(ha > 0)) return null; var t = ha * PROD.tHa; return { ha: ha, t: t, gain: t * 1000 * PROD.P * PROD.plus, recette: t * 1000 * PROD.P * (1 + PROD.plus), panier: ha * PROD.panier }; }
+  /* paramètres reliés au scénario SISSÊ~KABA : params.json (publié depuis le simulateur, bouton « Paramètres de la fiche publique ») */
+  fetch('params.json?t=' + Date.now()).then(function (r) { return r.ok ? r.json() : null; }).then(function (p) {
+    if (!p) return; var ok = function (x) { return typeof x === 'number' && isFinite(x) && x > 0; };
+    if (ok(p.P)) PROD.P = p.P; if (ok(p.tHa)) PROD.tHa = p.tHa; if (ok(p.plus)) PROD.plus = p.plus; if (ok(p.panier)) PROD.panier = p.panier;
+    if (ok(p.txMais)) TX_MAIS = p.txMais; if (ok(p.kgPoulet) && ok(p.cycles)) EST.chair = p.kgPoulet * p.cycles / 1000; if (ok(p.pondKgJour)) EST.pond = p.pondKgJour * 365 / 1000; if (ok(p.kgPorc)) EST.porc = p.kgPorc / 1000; if (ok(p.ecartMax)) ECART_MAX = p.ecartMax;
+    try { prodShow(); alimShow(); } catch (e) { /* */ }
+  }).catch(function () { /* valeurs par défaut */ });
   function prodShow() {
     var o = $('#prodOut'); if (!o) return; var c = prodCalc(); o.hidden = !c; if (!c) return;
-    o.innerHTML = 'Avec <b>' + nf(c.ha, 1) + ' ha</b>, vous pouvez livrer environ <b>' + nf(c.t, 1) + ' t de maïs</b> par campagne.<br>Avec SISSÊ~KABA, vous êtes payé 115 % du prix bord champ : environ <b>' + nf(Math.round(c.gain / 1000) * 1000, 0) + ' FCFA</b> de plus par campagne (recette ≈ ' + nf(Math.round(c.recette / 1000) * 1000, 0) + ' FCFA).<br>Vos semences et intrants (≈ ' + nf(Math.round(c.panier / 1000) * 1000, 0) + ' FCFA) peuvent être financés par ADVANS, après étude de votre dossier.<br><small>Exemple pour un prix bord champ de 100 FCFA/kg et un rendement utile de 3,4 t/ha ; les montants réels suivent le prix du marché et votre récolte.</small><br><b>👉 Inscrivez-vous : un technicien SOLEVO vous recontacte.</b>';
+    o.innerHTML = 'Avec <b>' + nf(c.ha, 1) + ' ha</b>, vous pouvez livrer environ <b>' + nf(c.t, 1) + ' t de maïs</b> par campagne.<br>Avec SISSÊ~KABA, vous êtes payé ' + nf((1 + PROD.plus) * 100, 0) + ' % du prix bord champ : environ <b>' + nf(Math.round(c.gain / 1000) * 1000, 0) + ' FCFA</b> de plus par campagne (recette ≈ ' + nf(Math.round(c.recette / 1000) * 1000, 0) + ' FCFA).<br>Vos semences et intrants (≈ ' + nf(Math.round(c.panier / 1000) * 1000, 0) + ' FCFA) peuvent être financés par ADVANS, après étude de votre dossier.<br><small>Exemple pour un prix bord champ de ' + nf(PROD.P, 0) + ' FCFA/kg et un rendement utile de ' + nf(PROD.tHa, 2) + ' t/ha ; les montants réels suivent le prix du marché et votre récolte.</small><br><b>👉 Inscrivez-vous : un technicien SOLEVO vous recontacte.</b>';
   }
   function alimShow() {
     var a = alimCalc(), o = $('#alimOut'); if (!o) return;
@@ -159,7 +166,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     o.hidden = false;
     var c = alimCheck();
     o.className = 'alo' + (c ? ' warn' : '');
-    o.innerHTML = 'Aliment utilisé : <b>' + nf(a.an, 1) + ' t par an</b>.<br>Votre besoin réel en maïs (60 % de l’aliment fini) : <b>' + nf(a.mais, 1) + ' t par an</b>, soit ' + nf(a.mais / 12, 2) + ' t par mois.' +
+    o.innerHTML = 'Aliment utilisé : <b>' + nf(a.an, 1) + ' t par an</b>.<br>Votre besoin réel en maïs (' + nf(TX_MAIS * 100, 0) + ' % de l’aliment fini) : <b>' + nf(a.mais, 1) + ' t par an</b>, soit ' + nf(a.mais / 12, 2) + ' t par mois.' +
       (c ? '<br><b>⚠ Cette quantité semble ' + (c.ec > 0 ? 'élevée' : 'faible') + ' pour votre élevage</b> : avec les effectifs indiqués, on estime environ <b>' + nf(c.est, 1) + ' t de maïs par an</b> (' + (c.ec > 0 ? '+' : '−') + nf(Math.abs(c.ec) * 100, 0) + ' %). Vérifiez la quantité, l’unité (sacs ou tonnes) et la période (jour, semaine, mois), puis corrigez si besoin.' : '');
   }
   ['surface'].forEach(function (n) { f.elements[n].addEventListener('input', prodShow); f.elements[n].addEventListener('change', prodShow); });
