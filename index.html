@@ -38,7 +38,7 @@ input,select{font:inherit;padding:11px 12px;border:1px solid var(--line);border-
 .steps{text-align:left;margin:10px 0;padding-left:20px}.steps li{margin:6px 0}
 footer{text-align:center;color:var(--mut);font-size:12px;padding:16px}
 [hidden]{display:none!important}
-.alq{margin:12px 0 4px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:#fff}.alq>b{color:var(--navy)}.alq .note{margin:4px 0 8px}.alo{margin-top:6px;padding:8px 10px;border-radius:10px;background:#EAF6E6;color:#1E5E1A;font-size:15px;line-height:1.4}
+.alq{margin:12px 0 4px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;background:#fff}.alq>b{color:var(--navy)}.alq .note{margin:4px 0 8px}.alo{margin-top:6px;padding:8px 10px;border-radius:10px;background:#EAF6E6;color:#1E5E1A;font-size:15px;line-height:1.4}.alo.warn{background:#FFF4E0;color:#7A4B00;border:1px solid #EE9B1D}
 .veille{border:1px solid var(--line);border-radius:12px;background:#fff;margin:0 0 12px;padding:10px 12px}.veille summary{cursor:pointer;font-weight:800;color:var(--navy)}.veille summary span{font-weight:400;color:var(--mut);font-size:13px}.veille .vg{margin-top:8px}.sacs{grid-column:1/-1;margin:-4px 0 4px}.sacs b{font-size:13px;color:var(--navy)}.sacs .chip span{padding:7px 11px}
 .kiosk .kh{display:none}.kbtn{font:inherit;font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--blue);cursor:pointer}
 body.kiosk{font-size:18px}body.kiosk #wrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;max-width:1280px;margin:0 auto;padding:10px}
@@ -137,13 +137,25 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     var an = q * (ALIM_U[f.alimU.value] || 0) * (ALIM_P[f.alimP.value] || 0);
     return { txt: nf(q, 2) + ' ' + f.alimU.value + ' ' + f.alimP.value, an: an, mais: an * TX_MAIS };
   }
+  /* estimation par l’effectif (hypothèses du modèle SOLEVO : 4 kg d’aliment par poulet et 6 bandes/an, 110 g par pondeuse et par jour, 250 kg par porc) */
+  var EST = { chair: 4 * 6 / 1000, pond: 0.110 * 365 / 1000, porc: 250 / 1000 }, ECART_MAX = 0.5, alimAck = '';
+  function num(n) { return parseFloat(String((f.elements[n] || {}).value || '').replace(',', '.')) || 0; }
+  function alimCheck() {
+    var a = alimCalc(); if (!a) return null;
+    var al = num('chair') * EST.chair + num('pondeuse') * EST.pond + num('porc') * EST.porc; if (!(al > 0)) return null;
+    var est = al * TX_MAIS, ec = (a.mais - est) / est;
+    return Math.abs(ec) > ECART_MAX ? { est: est, decl: a.mais, ec: ec, key: [f.alimQ.value, f.alimU.value, f.alimP.value, num('chair'), num('pondeuse'), num('porc')].join('|') } : null;
+  }
   function alimShow() {
     var a = alimCalc(), o = $('#alimOut'); if (!o) return;
     if (!a) { o.hidden = true; return; }
     o.hidden = false;
-    o.innerHTML = 'Aliment utilisé : <b>' + nf(a.an, 1) + ' t par an</b>.<br>Votre besoin réel en maïs (60 % de l’aliment fini) : <b>' + nf(a.mais, 1) + ' t par an</b>, soit ' + nf(a.mais / 12, 2) + ' t par mois.';
+    var c = alimCheck();
+    o.className = 'alo' + (c ? ' warn' : '');
+    o.innerHTML = 'Aliment utilisé : <b>' + nf(a.an, 1) + ' t par an</b>.<br>Votre besoin réel en maïs (60 % de l’aliment fini) : <b>' + nf(a.mais, 1) + ' t par an</b>, soit ' + nf(a.mais / 12, 2) + ' t par mois.' +
+      (c ? '<br><b>⚠ Cette quantité semble ' + (c.ec > 0 ? 'élevée' : 'faible') + ' pour votre élevage</b> : avec les effectifs indiqués, on estime environ <b>' + nf(c.est, 1) + ' t de maïs par an</b> (' + (c.ec > 0 ? '+' : '−') + nf(Math.abs(c.ec) * 100, 0) + ' %). Vérifiez la quantité, l’unité (sacs ou tonnes) et la période (jour, semaine, mois), puis corrigez si besoin.' : '');
   }
-  ['alimQ', 'alimU', 'alimP'].forEach(function (n) { f.elements[n].addEventListener('input', alimShow); f.elements[n].addEventListener('change', alimShow); });
+  ['alimQ', 'alimU', 'alimP', 'chair', 'pondeuse', 'porc'].forEach(function (n) { f.elements[n].addEventListener('input', alimShow); f.elements[n].addEventListener('change', alimShow); });
   function digits(t) { var d = String(t || '').replace(/\D/g, ''); if (d.indexOf('00') === 0) d = d.slice(2); if (d.length === 10) d = '225' + d; return d; }
   var PAGE = 'https://lehito1989.github.io/sisse-kaba-inscription-Public/';
   var KIOSK = false; try { KIOSK = /borne/i.test(location.hash) || localStorage.getItem('sk_fiche_borne') === '1'; } catch (e) { KIOSK = /borne/i.test(location.hash); }
@@ -216,6 +228,9 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     if (!R.profil) miss.push('votre profil'); if (!R.nom) miss.push('le nom'); if (digits(R.tel).length < 11) miss.push('un téléphone valide'); if (!R.localite) miss.push('la localité');
     if (deleg && !R.org) miss.push('le nom de la coopérative ou de l’association'); if (deleg && !R.kam) miss.push('le Key Account Manager souhaité');
     if (!R.consent) miss.push('votre accord');
+    var ck = alimCheck();
+    if (!miss.length && ck && alimAck !== ck.key) { alimAck = ck.key; alimShow(); var e2 = $('#err'); e2.hidden = false; e2.textContent = 'Votre quantité d’aliment semble éloignée de votre élevage (environ ' + nf(ck.est, 1) + ' t de maïs par an estimées, ' + nf(ck.decl, 1) + ' t déclarées). Corrigez-la si besoin, ou touchez de nouveau « Enregistrer » pour confirmer.'; $('#alimOut').scrollIntoView({ block: 'center' }); return; }
+    R.alimEcart = ck ? Math.round(ck.ec * 100) : null;
     var err = $('#err');
     if (miss.length) { err.hidden = false; err.textContent = 'Merci d’indiquer ' + miss.join(', ') + '.'; err.scrollIntoView({ block: 'center' }); return; }
     err.hidden = true;
@@ -232,6 +247,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     [['Poulets de chair', r.chair], ['Pondeuses', r.pondeuse], ['Porcs par an', r.porc], ['Maïs acheté par mois (t)', r.maisMois], ['Aliment', r.fabrique], ['Fournisseur', r.fournisseur], ['Surface maïs (ha)', r.surface], ['Coopérative', r.coop], ['Intrants', r.intrants]]
       .forEach(function (x) { if (x[1]) l.push(x[0] + ' : ' + x[1]); });
     if (r.alim) l.push('Aliment utilisé : ' + r.alim.txt, 'Aliment / an (t) : ' + nf(r.alim.an, 1), 'Besoin en maïs / an (t) : ' + nf(r.alim.mais, 1));
+    if (r.alim && r.alimEcart != null) l.push('Contrôle maïs : écart de ' + (r.alimEcart > 0 ? '+' : '') + r.alimEcart + ' % avec l’effectif, confirmé par le visiteur');
     if (TABLE) l.push('Table souhaitée : ' + TABLE);
     (r.veille || []).forEach(function (x) { l.push('Prix ' + x[0][1] + ' (' + x[0][2] + ') : ' + x[1]); if (x[2]) l.push('Sac ' + x[0][1] + ' (kg) : ' + x[2]); });
     l.push('Priorités : ' + r.prios.join(', '), 'Dépôt : ' + r.depot, 'Contact : ' + r.contact, 'Accueil : ' + (acc.length ? acc.join(' + ') : 'non merci'), 'Accord : oui');
