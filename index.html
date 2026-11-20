@@ -47,6 +47,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
 @media (max-width:900px){body.kiosk #wrap{grid-template-columns:1fr}#kqr{position:static}}
 
 .veille label.req{color:#b42318}.veille label.req:after{content:" *"}.veille.need{border:2px solid #b42318}
+.promo{margin:14px 0;border:3px dashed #37A028;border-radius:16px;background:#EAF6E6;padding:14px;text-align:center}.promo span{display:block;font-weight:800;color:#1E6B14}.promo b{display:block;font-size:30px;letter-spacing:.06em;color:#002060;margin:6px 0}.promo small{display:block;color:#33405e;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -285,6 +286,8 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   }
   $('#simBtn').addEventListener('click', function () { simRun('#simOut'); });
   var R = null, kTimer = null;
+  /* code promo SELAB SHOW 2026 : même calcul que dans la base SOLEVO (lié au téléphone), valable jusqu’au 30/11/2026 */
+  function skPromo(tel) { var d = String(tel || '').replace(/\D/g, ''); if (d.indexOf('00') === 0) d = d.slice(2); if (d.length === 10) d = '225' + d; d = d.slice(-10); if (d.length < 10) return ''; var h = 2166136261, s = 'SELAB2026|' + d; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } var A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', c = ''; for (var k = 0; k < 4; k++) { c += A[h % 32]; h = Math.floor(h / 32); } return 'SK26-' + d.slice(-4) + '-' + c; }
   /* enregistrement direct dans la base en ligne (Google Sheets, lien publié dans params.json) */
   /* sans réseau : la fiche est gardée sur le téléphone et envoyée seule au retour de la connexion */
   var FQ = 'skf_queue';
@@ -343,6 +346,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     R.acc = $$('[name=acc]:checked').map(function (i) { return i.value; });
     R.vx = veilleNow(); R.eff = { chair: R.chair, pondeuse: R.pondeuse, porc: R.porc };
     R.fid = 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    R.promo = new Date().toISOString().slice(0, 10) <= '2026-11-30' ? skPromo(R.tel) : '';
     R.online = sendOnline();
     if (!KIOSK && !R.online) { try { window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(fiche(R.acc)), '_blank', 'noopener'); R.sent = true; } catch (er) { /* */ } }
     done();
@@ -360,6 +364,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     if (r.alim && r.alimEcart != null) l.push('Contrôle maïs : écart de ' + (r.alimEcart > 0 ? '+' : '') + r.alimEcart + ' % avec l’effectif, confirmé par le visiteur');
     if (TABLE) l.push('Table souhaitée : ' + TABLE);
     (r.veille || []).forEach(function (x) { l.push('Prix ' + x[0][1] + ' (' + x[0][2] + ') : ' + x[1]); if (x[2]) l.push('Sac ' + x[0][1] + ' (kg) : ' + x[2]); });
+    if (r.promo) l.push('Code promo SELAB : ' + r.promo);
     l.push('Priorités : ' + r.prios.join(', '), 'Dépôt : ' + r.depot, 'Contact : ' + r.contact, 'Accueil : ' + (acc.length ? acc.join(' + ') : 'non merci'), 'Accord : oui');
     return l.join('\n');
   }
@@ -367,6 +372,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     var n = R.nb, deleg = /Délégation|Association/.test(R.visite);
     var aq = $('#kqr'); if (aq) aq.hidden = true;
     $('#app').innerHTML = '<div class="done"><div class="ok">✓</div><h2>Merci ' + esc(R.nom.split(/\s+/).slice(-1)[0]) + ' !</h2>' +
+      (R.promo ? '<div class="promo"><span>🎁 Votre code promo SELAB SHOW 2026</span><b>' + esc(R.promo) + '</b><small>Valable jusqu’au 30/11/2026 : Ponte −2 000 F, CMV Porc −2 000 F et Chair −1 000 F par sac de prémix MG2MIX. Notez-le ou faites une capture d’écran : saisissez-le avec votre numéro dans la commande en ligne SOLEVO.</small><a class="btn" href="https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF#commande" target="_blank" rel="noopener">🛒 Commander avec mon code</a></div>' : '') +
       '<p>' + (deleg ? 'Votre délégation sera reçue en <b>salle de conférence SOLEVO</b> avec ' + esc(R.kam) + '.' : (TABLE ? 'Vous êtes reçu(e) à la <b>' + esc(TABLE) + '</b> (4 personnes au plus par table).' : 'Un technicien SOLEVO vous recevra à sa table (4 personnes au plus par table).')) + '</p>' +
       '<div class="off"><h3>SOLEVO vous offre' + (n > 1 ? ' (' + n + ' personnes)' : '') + '</h3><div class="offb"><button type="button" data-a="Eau" class="on">💧 ' + (n > 1 ? n + ' bouteilles' : '1 bouteille') + ' d’eau</button><button type="button" data-a="Café" class="on">☕ ' + (n > 1 ? n + ' cafés' : '1 café') + '</button><button type="button" data-a="non">Non merci</button></div><p class="note">Servi à l’accueil SOLEVO pendant votre attente.</p></div>' +
       (R.online ? (R.queued ? '<p class="ok" style="font-size:18px">✓ Votre fiche est enregistrée sur ce téléphone. Pas de réseau pour l’instant : elle sera envoyée automatiquement dès le retour de la connexion (gardez cette page ouverte ou rouvrez-la plus tard).</p>' : '<p class="ok" style="font-size:18px">✓ Votre fiche est enregistrée en ligne. Rien d’autre à faire : un technicien SOLEVO vous recontacte.</p>') + '<p class="note">Vous pouvez aussi garder une copie sur WhatsApp (facultatif).</p>' : '') + (R.online ? '' : (R.sent ? '<p class="ok" style="font-size:16px">WhatsApp s’est ouvert avec votre fiche : touchez « Envoyer ». Rien ne s’est ouvert ? Utilisez le bouton vert ci-dessous.</p>' : '') + '<ol class="steps"><li>' + (R.sent ? 'Dans WhatsApp, touchez « Envoyer ».' : 'Touchez le bouton vert : votre fiche s’ouvre dans WhatsApp.') + '</li><li>Envoyez le message sans le modifier.</li><li>Vous recevez votre table d’entretien par message. Présentez-vous à l’accueil du stand.</li></ol>') +
