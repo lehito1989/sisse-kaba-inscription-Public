@@ -60,7 +60,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     <fieldset><legend>Vous êtes</legend><div class="chips" data-r="profil"></div></fieldset>
     <div class="vg">
       <label>Nom et prénom *<input name="nom" autocomplete="name" required></label>
-      <label>Téléphone WhatsApp *<input name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="07 00 00 00 00" required></label>
+      <label>Téléphone *<input name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="07 00 00 00 00" required></label>
       <label>Localité *<input name="localite" required list="villesCI"><span id="geoOut" class="geo" hidden></span></label><datalist id="villesCI"></datalist>
       <label>E-mail (pour recevoir la présentation)<input name="email" type="email" inputmode="email" autocomplete="email"></label>
     </div>
@@ -93,11 +93,11 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     <p class="err" id="err" hidden></p>
     <fieldset><legend>SOLEVO vous offre à l’accueil</legend><div class="chips"><label class="chip"><input type="checkbox" name="acc" value="Eau" checked><span>💧 Une bouteille d’eau</span></label><label class="chip"><input type="checkbox" name="acc" value="Café" checked><span>☕ Un café</span></label></div></fieldset>
     <button class="btn" type="submit">Enregistrer</button>
-    <p class="note kh" style="text-align:center">« Enregistrer » ouvre WhatsApp avec votre fiche déjà remplie : touchez simplement « Envoyer ».</p>
+    <p class="note kh" style="text-align:center">« Enregistrer » envoie directement votre fiche à SOLEVO : vous recevez aussitôt votre code promo.</p>
   </form>
 </main>
 <aside id="kqr" hidden><div class="kor">ou</div><h2>Depuis votre téléphone</h2><canvas id="kqrc"></canvas><p>Scannez : cette même fiche s’ouvre sur votre téléphone.</p></aside></div>
-<footer>SOLEVO Côte d’Ivoire • Inscriptions WhatsApp : +225 07 10 47 14 02 • Élevage : Elvis LEHITO, Key Account Manager FEED, 07 10 47 14 02 • Maïs : Arnaud AGOHI, Key Account Manager SEED, 07 87 87 73 54</footer>
+<footer>SOLEVO Côte d’Ivoire • Contact SOLEVO : +225 07 10 47 14 02 • Élevage : Elvis LEHITO, Key Account Manager FEED, 07 10 47 14 02 • Maïs : Arnaud AGOHI, Key Account Manager SEED, 07 87 87 73 54</footer>
 <script src="lib/qrcode.js"></script>
 <script>
 (function () {
@@ -109,7 +109,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     kam: ['Elvis LEHITO (KAM FEED)', 'Arnaud AGOHI (KAM SEED)', 'Les deux Key Account Managers'],
     fabrique: ['Je le fabrique', 'Je l’achète complet', 'Les deux'],
     intrants: ['Oui', 'Non', 'Parfois'],
-    contact: ['WhatsApp', 'SMS', 'Appel', 'E-mail'],
+    contact: ['Appel', 'SMS', 'E-mail'],
     prios: ['Maïs moins cher', 'Prémix SOLEVO', 'Semences et engrais', 'Vendre mon maïs', 'Conseil technique', 'Financement'],
     depot: ['Abidjan', 'Yamoussoukro', 'Agnibilékrou', 'Autre / à préciser']
   };
@@ -117,7 +117,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); }
   function chip(type, name, v, on) { return '<label class="chip"><input type="' + type + '" name="' + name + '" value="' + esc(v) + '"' + (on ? ' checked' : '') + '><span>' + esc(v) + '</span></label>'; }
-  $$('[data-r]').forEach(function (el) { var k = el.dataset.r; el.innerHTML = L[k].map(function (v) { return chip('radio', k, v, (k === 'visite' && v === 'Seul(e)') || (k === 'contact' && v === 'WhatsApp')); }).join(''); });
+  $$('[data-r]').forEach(function (el) { var k = el.dataset.r; el.innerHTML = L[k].map(function (v) { return chip('radio', k, v, (k === 'visite' && v === 'Seul(e)') || (k === 'contact' && v === 'Appel')); }).join(''); });
   $$('[data-c]').forEach(function (el) { var k = el.dataset.c; el.innerHTML = L[k].map(function (v) { return chip('checkbox', k, v, false); }).join(''); });
   $('[name=depot]').innerHTML = L.depot.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('');
   /* principales localités de Côte d’Ivoire : [nom, région ou district, latitude, longitude] (coordonnées approchées) */
@@ -289,22 +289,31 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   /* code promo SELAB SHOW 2026 : même calcul que dans la base SOLEVO (lié au téléphone), valable jusqu’au 30/11/2026 */
   function skPromo(tel) { var d = String(tel || '').replace(/\D/g, ''); if (d.indexOf('00') === 0) d = d.slice(2); if (d.length === 10) d = '225' + d; d = d.slice(-10); if (d.length < 10) return ''; var h = 2166136261, s = 'SELAB2026|' + d; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } var A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', c = ''; for (var k = 0; k < 4; k++) { c += A[h % 32]; h = Math.floor(h / 32); } return 'SK26-' + d.slice(-4) + '-' + c; }
   /* enregistrement direct dans la base en ligne (Google Sheets, lien publié dans params.json) */
-  /* sans réseau : la fiche est gardée sur le téléphone et envoyée seule au retour de la connexion */
-  var FQ = 'skf_queue';
+  /* enregistrement direct (sans WhatsApp) : e-mail d’archive lu par la base SOLEVO + feuille en ligne si branchée ;
+     sans réseau, la fiche est gardée sur le téléphone et envoyée seule au retour de la connexion */
+  var FQ = 'skf_queue2', FS_TO = 'elvis.lehito@solevogroup.com', FS_CC = 'lehitognakoury@gmail.com';
   function fqGet() { try { return JSON.parse(localStorage.getItem(FQ) || '[]'); } catch (e) { return []; } }
   function fqSet(q) { try { localStorage.setItem(FQ, JSON.stringify(q)); } catch (e) { /* */ } }
-  function post(d) { return fetch(HOOK, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(d) }); }
-  function fqFlush() {
-    if (!HOOK || !navigator.onLine) return; var q = fqGet(); if (!q.length) return;
-    var d = q[0]; post(d).then(function () { var r = fqGet().filter(function (x) { return x.fid !== d.fid; }); fqSet(r); if (r.length) setTimeout(fqFlush, 400); }).catch(function () { /* nouvel essai plus tard */ });
+  function fqUpd(fid, k) { fqSet(fqGet().map(function (x) { if (x.d.fid === fid) x[k] = true; return x; }).filter(function (x) { return !(x.fs && (x.gs || !HOOK)); })); }
+  function fsBody(d) {
+    var b = { _subject: 'Inscription SISSÊ~KABA ' + d.fid + ' – ' + d.nom, _cc: FS_CC, _template: 'table', _captcha: 'false', 'Profil': d.profil, 'Nom': d.nom, 'Téléphone': d.tel, 'Localité': d.localite, 'E-mail': d.email || '', 'Code promo SELAB': d.promo || '', 'Fiche complète': d.fiche, 'Données pour l’import automatique (ne pas modifier)': 'SKFICHE' + JSON.stringify(d) + 'SKFIN' };
+    if (d.email) { b._replyto = d.email; b._autoresponse = 'Bonjour ' + d.nom + ', votre inscription au programme SISSÊ~KABA (SOLEVO Côte d’Ivoire) est bien enregistrée.' + (d.promo ? ' Votre code promo SELAB SHOW 2026 : ' + d.promo + ' (valable jusqu’au 30/11/2026 sur les prémix MG2MIX).' : '') + ' Un technicien SOLEVO vous recontacte.'; }
+    return b;
   }
-  addEventListener('online', function () { setTimeout(fqFlush, 1500); }); setInterval(fqFlush, 30000);
-  function sendOnline() {
-    if (!HOOK) return false;
-    var d = { fid: R.fid, profil: R.profil, nom: R.nom, tel: R.tel, localite: R.localite, email: R.email, fiche: fiche(R.acc) };
-    var q = fqGet(); q.push(d); fqSet(q); R.queued = !navigator.onLine;
-    if (navigator.onLine) post(d).then(function () { fqSet(fqGet().filter(function (x) { return x.fid !== d.fid; })); fqFlush(); }).catch(function () { /* reste dans la file */ });
-    return true;
+  var fqBusy = false;
+  function fqFlush(cb) {
+    if (fqBusy || !navigator.onLine) { if (cb) cb(); return; } var q = fqGet(); if (!q.length) { if (cb) cb(); return; }
+    fqBusy = true; var it = q[0], d = it.d, jobs = [];
+    if (!it.fs) jobs.push(fetch('https://formsubmit.co/ajax/' + FS_TO, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(fsBody(d)) })
+      .then(function (r) { return r.json(); }).then(function (j) { if (String(j.success) === 'true') fqUpd(d.fid, 'fs'); }).catch(function () { /* nouvel essai */ }));
+    if (HOOK && !it.gs) jobs.push(fetch(HOOK, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(d) }).then(function () { fqUpd(d.fid, 'gs'); }).catch(function () { /* */ }));
+    Promise.all(jobs).then(function () { fqBusy = false; var q2 = fqGet(); if (q2.length && q2[0].d.fid !== d.fid) fqFlush(cb); else if (cb) cb(); });
+  }
+  addEventListener('online', function () { setTimeout(fqFlush, 1500); }); setInterval(fqFlush, 30000); setTimeout(fqFlush, 2000);
+  function sendAll() {
+    var d = { fid: R.fid, at: new Date().toISOString(), profil: R.profil, nom: R.nom, tel: R.tel, localite: R.localite, email: R.email, promo: R.promo, fiche: fiche(R.acc) };
+    var q = fqGet(); q.push({ d: d, fs: false, gs: false }); fqSet(q);
+    fqFlush(function () { var st = $('#sendSt'); if (!st) return; var left = fqGet().some(function (x) { return x.d.fid === d.fid; }); st.className = left ? 'note' : 'ok'; st.innerHTML = left ? '⏳ Fiche gardée sur ce téléphone : envoi automatique dès que la connexion le permet (laissez la page ouverte quelques instants).' : '✓ Inscription enregistrée dans la base SOLEVO.'; });
   }
   var TABLE = ''; try { var mt = decodeURIComponent(location.hash || '').match(/table=([^&]+)/i); if (mt) TABLE = mt[1].trim(); } catch (e) { /* */ }
   if (TABLE) { var ld = document.querySelector('.lead'); if (ld) ld.innerHTML = 'Vous êtes à la <b>' + esc(TABLE) + '</b> du stand SOLEVO : remplissez la fiche, votre entretien suit.'; }
@@ -330,7 +339,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     var g = function (n) { return (f.elements[n] && f.elements[n].value || '').trim(); };
     R = { profil: val('profil'), nom: g('nom'), tel: g('tel'), localite: g('localite'), email: g('email'), visite: val('visite') || 'Seul(e)', nb: Math.max(1, parseInt(g('nb'), 10) || 1), org: g('org'), kam: val('kam'),
       chair: g('chair'), pondeuse: g('pondeuse'), porc: g('porc'), maisMois: g('maisMois'), fabrique: val('fabrique'), fournisseur: g('fournisseur'), surface: g('surface'), coop: g('coop'), intrants: val('intrants'),
-      geo: geoFind(g('localite')), prios: $$('[name=prios]:checked').map(function (i) { return i.value; }), depot: g('depot'), contact: val('contact') || 'WhatsApp', consent: f.consent.checked, alim: alimCalc(), prod: /roducteur/.test(val('profil')) ? prodCalc() : null, veille: VEILLE.map(function (v) { return [v, g('vx_' + v[0]), (val('sac_' + v[0]) || '').replace(' kg', '')]; }).filter(function (x) { return x[1]; }) };
+      geo: geoFind(g('localite')), prios: $$('[name=prios]:checked').map(function (i) { return i.value; }), depot: g('depot'), contact: val('contact') || 'Appel', consent: f.consent.checked, alim: alimCalc(), prod: /roducteur/.test(val('profil')) ? prodCalc() : null, veille: VEILLE.map(function (v) { return [v, g('vx_' + v[0]), (val('sac_' + v[0]) || '').replace(' kg', '')]; }).filter(function (x) { return x[1]; }) };
     if (R.visite === 'Seul(e)') R.nb = 1;
     var deleg = /Délégation|Association/.test(R.visite), miss = [];
     if (!R.profil) miss.push('votre profil'); if (!R.nom) miss.push('le nom'); if (digits(R.tel).length < 11) miss.push('un téléphone valide'); if (!R.localite) miss.push('la localité');
@@ -347,8 +356,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     R.vx = veilleNow(); R.eff = { chair: R.chair, pondeuse: R.pondeuse, porc: R.porc };
     R.fid = 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     R.promo = new Date().toISOString().slice(0, 10) <= '2026-11-30' ? skPromo(R.tel) : '';
-    R.online = sendOnline();
-    if (!KIOSK && !R.online) { try { window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(fiche(R.acc)), '_blank', 'noopener'); R.sent = true; } catch (er) { /* */ } }
+    sendAll();
     done();
   });
   function fiche(acc) {
@@ -372,25 +380,17 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     var n = R.nb, deleg = /Délégation|Association/.test(R.visite);
     var aq = $('#kqr'); if (aq) aq.hidden = true;
     $('#app').innerHTML = '<div class="done"><div class="ok">✓</div><h2>Merci ' + esc(R.nom.split(/\s+/).slice(-1)[0]) + ' !</h2>' +
+      '<p id="sendSt" class="note">⏳ Enregistrement de votre fiche…</p>' +
       (R.promo ? '<div class="promo"><span>🎁 Votre code promo SELAB SHOW 2026</span><b>' + esc(R.promo) + '</b><small>Valable jusqu’au 30/11/2026 : Ponte −2 000 F, CMV Porc −2 000 F et Chair −1 000 F par sac de prémix MG2MIX. Notez-le ou faites une capture d’écran : saisissez-le avec votre numéro dans la commande en ligne SOLEVO.</small><a class="btn" href="https://claude.ai/artifact/TUnnsq3KPaGHqWqgX2PpWF#commande" target="_blank" rel="noopener">🛒 Commander avec mon code</a></div>' : '') +
       '<p>' + (deleg ? 'Votre délégation sera reçue en <b>salle de conférence SOLEVO</b> avec ' + esc(R.kam) + '.' : (TABLE ? 'Vous êtes reçu(e) à la <b>' + esc(TABLE) + '</b> (4 personnes au plus par table).' : 'Un technicien SOLEVO vous recevra à sa table (4 personnes au plus par table).')) + '</p>' +
-      '<div class="off"><h3>SOLEVO vous offre' + (n > 1 ? ' (' + n + ' personnes)' : '') + '</h3><div class="offb"><button type="button" data-a="Eau" class="on">💧 ' + (n > 1 ? n + ' bouteilles' : '1 bouteille') + ' d’eau</button><button type="button" data-a="Café" class="on">☕ ' + (n > 1 ? n + ' cafés' : '1 café') + '</button><button type="button" data-a="non">Non merci</button></div><p class="note">Servi à l’accueil SOLEVO pendant votre attente.</p></div>' +
-      (R.online ? (R.queued ? '<p class="ok" style="font-size:18px">✓ Votre fiche est enregistrée sur ce téléphone. Pas de réseau pour l’instant : elle sera envoyée automatiquement dès le retour de la connexion (gardez cette page ouverte ou rouvrez-la plus tard).</p>' : '<p class="ok" style="font-size:18px">✓ Votre fiche est enregistrée en ligne. Rien d’autre à faire : un technicien SOLEVO vous recontacte.</p>') + '<p class="note">Vous pouvez aussi garder une copie sur WhatsApp (facultatif).</p>' : '') + (R.online ? '' : (R.sent ? '<p class="ok" style="font-size:16px">WhatsApp s’est ouvert avec votre fiche : touchez « Envoyer ». Rien ne s’est ouvert ? Utilisez le bouton vert ci-dessous.</p>' : '') + '<ol class="steps"><li>' + (R.sent ? 'Dans WhatsApp, touchez « Envoyer ».' : 'Touchez le bouton vert : votre fiche s’ouvre dans WhatsApp.') + '</li><li>Envoyez le message sans le modifier.</li><li>Vous recevez votre table d’entretien par message. Présentez-vous à l’accueil du stand.</li></ol>') +
-      (KIOSK ? '<div class="kq"><h3>Scannez pour envoyer votre fiche depuis votre téléphone</h3><canvas id="kq"></canvas><p class="note">Le message WhatsApp s’ouvre déjà rempli : il suffit de l’envoyer.</p></div>' : '') +
-      '<a class="btn" id="go" target="_blank" rel="noopener">' + (KIOSK ? 'Ou envoyer depuis la borne (WhatsApp)' : 'Envoyer ma fiche par WhatsApp') + '</a><a class="btn alt" id="sms">Envoyer par SMS</a>' +
-      '<p class="note">Pas de WhatsApp ni de réseau ? Montrez cet écran à l’accueil du stand.</p>' +
-      (R.vx && Object.keys(R.vx).length ? '<div id="simDone"></div><div id="simSelf" hidden><a class="btn alt" id="simWa" target="_blank" rel="noopener">Garder mes coûts sur mon WhatsApp</a>' + (R.email ? '<a class="btn alt" id="simMail">Les recevoir par e-mail</a>' : '') + '<p class="note">SOLEVO vous envoie aussi ces résultats par e-mail et WhatsApp dès réception de votre fiche, puis la simulation validée après votre entretien.</p></div>' : '') +
+      ((R.acc || []).length ? '<p class="note">SOLEVO vous offre ' + R.acc.map(function (a) { return a === 'Eau' ? (n > 1 ? n + ' bouteilles d’eau' : 'une bouteille d’eau') : (n > 1 ? n + ' cafés' : 'un café'); }).join(' et ') + ', servi(s) à l’accueil pendant votre attente.</p>' : '') +
+      '<p class="note">Pas de réseau ? Montrez cet écran à l’accueil du stand : votre fiche reste sur ce téléphone et part dès le retour de la connexion.</p>' +
+      (R.vx && Object.keys(R.vx).length ? '<div id="simDone"></div><div id="simSelf" hidden>' + (R.email ? '<a class="btn alt" id="simMail">Recevoir mes coûts par e-mail</a>' : '') + '<p class="note">Un technicien SOLEVO valide ces résultats avec vous pendant l’entretien.</p></div>' : '') +
       '<button type="button" class="btn alt" id="again">Nouvelle inscription</button></div>';
-    $$('[data-a]').forEach(function (b) { if (b.dataset.a !== 'non') b.classList.toggle('on', (R.acc || []).indexOf(b.dataset.a) >= 0); else b.classList.toggle('on', R.acc && !R.acc.length); });
-    var acc = function () { return $$('[data-a].on').map(function (b) { return b.dataset.a; }).filter(function (x) { return x !== 'non'; }); };
-    var links = function () { var t = fiche(acc()), u = 'https://wa.me/' + WA + '?text=' + encodeURIComponent(t); $('#go').href = u; $('#sms').href = 'sms:+' + WA + '?body=' + encodeURIComponent(t); if (KIOSK && $('#kq')) { try { qrTo($('#kq'), u, 700); } catch (e) { /* */ } } if (KIOSK) { clearTimeout(kTimer); kTimer = setTimeout(function () { location.reload(); }, 90000); } };
-    $$('[data-a]').forEach(function (b) { b.addEventListener('click', function () {
-      if (b.dataset.a === 'non') $$('[data-a]').forEach(function (x) { x.classList.toggle('on', x === b); });
-      else { b.classList.toggle('on'); $('[data-a=non]').classList.remove('on'); }
-      links(); }); });
-    links(); $('#again').addEventListener('click', function () { location.reload(); }); window.scrollTo(0, 0);
+    if (KIOSK) { clearTimeout(kTimer); kTimer = setTimeout(function () { location.reload(); }, 60000); }
+    $('#again').addEventListener('click', function () { location.reload(); }); window.scrollTo(0, 0);
     if ($('#simDone')) {
-      var sw = function (rep) { if (!rep) return; var t = rep.text; $('#simSelf').hidden = false; $('#simWa').href = 'https://wa.me/' + digits(R.tel) + '?text=' + encodeURIComponent(t); if ($('#simMail')) $('#simMail').href = 'mailto:' + encodeURIComponent(R.email) + '?subject=' + encodeURIComponent('SOLEVO – Mes coûts avec les prémix MG2MIX') + '&body=' + encodeURIComponent(t.replace(/[*_]/g, '')); };
+      var sw = function (rep) { if (!rep) return; var t = rep.text; $('#simSelf').hidden = false; if ($('#simMail')) $('#simMail').href = 'mailto:' + encodeURIComponent(R.email) + '?subject=' + encodeURIComponent('SOLEVO – Mes coûts avec les prémix MG2MIX') + '&body=' + encodeURIComponent(t.replace(/[*_]/g, '')); };
       if (SIM && R.simFor === JSON.stringify(R.vx)) { $('#simDone').innerHTML = simHtml(SIM); sw(SIM); }
       else simCalc(R.vx).then(function (rep) { if (rep) { $('#simDone').innerHTML = simHtml(rep); sw(rep); } });
     }
