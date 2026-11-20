@@ -1,8 +1,8 @@
 {
-  "maj": "2026-11-19",
+  "maj": "2026-11-20",
   "scenario": "Scénario 2 : 500 t, croissance 10 %/an",
   "P": 100,
-  "tHa": 3.42,
+  "tHa": 5,
   "plus": 0.15,
   "panier": 195000,
   "txMais": 0.6,

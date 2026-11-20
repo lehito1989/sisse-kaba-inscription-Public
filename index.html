@@ -200,8 +200,8 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     var est = al * TX_MAIS, ec = (a.mais - est) / est;
     return Math.abs(ec) > ECART_MAX ? { est: est, decl: a.mais, ec: ec, key: [f.alimQ.value, f.alimU.value, f.alimP.value, num('chair'), num('pondeuse'), num('porc')].join('|') } : null;
   }
-  /* gain estimé du producteur (hypothèses SISSÊ~KABA : rendement utile 3,42 t/ha, prix bord champ de référence 100 FCFA/kg, +15 %, intrants ≈ 195 000 FCFA/ha) */
-  var PROD = { tHa: 3.42, P: 100, plus: 0.15, panier: 195000 };
+  /* gain estimé du producteur (hypothèses SISSÊ~KABA : rendement 5 t/ha, prix bord champ de référence 100 FCFA/kg, +15 %, intrants ≈ 195 000 FCFA/ha) */
+  var PROD = { tHa: 5, P: 100, plus: 0.15, panier: 195000 };
   function prodCalc() { var ha = num('surface'); if (!(ha > 0)) return null; var t = ha * PROD.tHa; return { ha: ha, t: t, gain: t * 1000 * PROD.P * PROD.plus, recette: t * 1000 * PROD.P * (1 + PROD.plus), panier: ha * PROD.panier }; }
   /* paramètres reliés au scénario SISSÊ~KABA : params.json (publié depuis le simulateur, bouton « Paramètres de la fiche publique ») */
   var HOOK = '';
