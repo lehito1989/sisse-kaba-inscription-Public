@@ -319,7 +319,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   if (TABLE) { var ld = document.querySelector('.lead'); if (ld) ld.innerHTML = 'Vous êtes à la <b>' + esc(TABLE) + '</b> du stand SOLEVO : remplissez la fiche, votre entretien suit.'; }
   /* veille des prix obligatoire pour les éleveurs qui fabriquent leur aliment */
   function vxNeed() {
-    var fab = /fabrique|deux/i.test(val('fabrique') || ''), elev = /leveur|Fabricant/.test(val('profil') || '');
+    var fab = /fabrique|deux/i.test(val('fabrique') || '') || /Fabricant/.test(val('profil') || ''), elev = /leveur|Fabricant/.test(val('profil') || '');
     if (!(fab && elev)) return [];
     var g = function (n) { return parseFloat(String((f.elements[n] || {}).value || '').replace(',', '.')) || 0; };
     var k = ['mais', 'soja', 'son']; if (g('chair') > 0) k.push('poulet'); if (g('pondeuse') > 0) k.push('plaq'); if (g('porc') > 0) k.push('porcVif');
@@ -344,6 +344,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     var deleg = /Délégation|Association/.test(R.visite), miss = [];
     if (!R.profil) miss.push('votre profil'); if (!R.nom) miss.push('le nom'); if (digits(R.tel).length < 11) miss.push('un téléphone valide'); if (!R.localite) miss.push('la localité');
     if (deleg && !R.org) miss.push('le nom de la coopérative ou de l’association'); if (deleg && !R.kam) miss.push('le Key Account Manager souhaité');
+    if (/leveur|Fabricant/.test(R.profil) && !/Fabricant/.test(R.profil) && !R.fabrique) miss.push('votre aliment (je le fabrique, je l’achète complet ou les deux)');
     if (!R.consent) miss.push('votre accord');
     var vxm = vxMark(); if (vxm.length) { var lab = {}; VEILLE.forEach(function (v) { lab[v[0]] = v[1].replace(/ \(vente\)/, ' (prix de vente)'); }); miss.push('la veille des prix (obligatoire quand vous fabriquez votre aliment) : ' + vxm.map(function (k) { return lab[k]; }).join(', ')); $('#vxBox').classList.add('need'); } else if ($('#vxBox')) $('#vxBox').classList.remove('need');
     var ck = alimCheck();
