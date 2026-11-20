@@ -46,6 +46,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
 .kor{font-weight:800;color:var(--mut);text-transform:uppercase}#kqr h2,.kq h3{color:var(--navy);margin:6px 0}.kq canvas{width:260px;max-width:80%;height:auto}
 @media (max-width:900px){body.kiosk #wrap{grid-template-columns:1fr}#kqr{position:static}}
 
+.veille label.req{color:#b42318}.veille label.req:after{content:" *"}.veille.need{border:2px solid #b42318}
 </style>
 </head>
 <body>
@@ -80,7 +81,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     <fieldset class="fx-pr"><legend>Votre production de maïs</legend><div class="vg">
       <label>Surface en maïs (ha)<input name="surface" type="number" inputmode="decimal" min="0" step="0.5"></label><label>Coopérative (si membre)<input name="coop"></label></div><div id="prodOut" class="alo" hidden></div>
       <div class="chips"><b>Achetez-vous semences et engrais ?</b></div><div class="chips" data-r="intrants"></div></fieldset>
-    <details class="veille"><summary>Veille des prix et vos coûts avec SOLEVO <span>(facultatif, 1 minute)</span></summary>
+    <details class="veille" id="vxBox"><summary>Veille des prix et vos coûts avec SOLEVO <span id="vxReq">(facultatif, 1 minute)</span></summary>
       <p class="note">Indiquez vos prix d’achat et vos prix de vente actuels (seulement ceux que vous connaissez) : nous calculons aussitôt vos coûts de production avec les prémix SOLEVO MG2MIX.</p>
       <div class="vg" id="veille"></div>
       <button type="button" class="btn alt" id="simBtn">📊 Voir mes coûts avec les prémix SOLEVO</button><div id="simOut"></div></details>
@@ -202,8 +203,10 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   var PROD = { tHa: 3.42, P: 100, plus: 0.15, panier: 195000 };
   function prodCalc() { var ha = num('surface'); if (!(ha > 0)) return null; var t = ha * PROD.tHa; return { ha: ha, t: t, gain: t * 1000 * PROD.P * PROD.plus, recette: t * 1000 * PROD.P * (1 + PROD.plus), panier: ha * PROD.panier }; }
   /* paramètres reliés au scénario SISSÊ~KABA : params.json (publié depuis le simulateur, bouton « Paramètres de la fiche publique ») */
+  var HOOK = '';
   fetch('params.json?t=' + Date.now()).then(function (r) { return r.ok ? r.json() : null; }).then(function (p) {
     if (!p) return; var ok = function (x) { return typeof x === 'number' && isFinite(x) && x > 0; };
+    if (typeof p.gsHook === 'string' && /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(p.gsHook)) HOOK = p.gsHook;
     if (ok(p.P)) PROD.P = p.P; if (ok(p.tHa)) PROD.tHa = p.tHa; if (ok(p.plus)) PROD.plus = p.plus; if (ok(p.panier)) PROD.panier = p.panier;
     if (ok(p.txMais)) TX_MAIS = p.txMais; if (ok(p.kgPoulet) && ok(p.cycles)) EST.chair = p.kgPoulet * p.cycles / 1000; if (ok(p.pondKgJour)) EST.pond = p.pondKgJour * 365 / 1000; if (ok(p.kgPorc)) EST.porc = p.kgPorc / 1000; if (ok(p.ecartMax)) ECART_MAX = p.ecartMax;
     try { prodShow(); alimShow(); } catch (e) { /* */ }
@@ -282,8 +285,30 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   }
   $('#simBtn').addEventListener('click', function () { simRun('#simOut'); });
   var R = null, kTimer = null;
+  /* enregistrement direct dans la base en ligne (Google Sheets, lien publié dans params.json) */
+  function sendOnline() {
+    if (!HOOK) return false;
+    try { fetch(HOOK, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fid: R.fid, profil: R.profil, nom: R.nom, tel: R.tel, localite: R.localite, email: R.email, fiche: fiche(R.acc) }) }).catch(function () { /* */ }); return true; } catch (e) { return false; }
+  }
   var TABLE = ''; try { var mt = decodeURIComponent(location.hash || '').match(/table=([^&]+)/i); if (mt) TABLE = mt[1].trim(); } catch (e) { /* */ }
   if (TABLE) { var ld = document.querySelector('.lead'); if (ld) ld.innerHTML = 'Vous êtes à la <b>' + esc(TABLE) + '</b> du stand SOLEVO : remplissez la fiche, votre entretien suit.'; }
+  /* veille des prix obligatoire pour les éleveurs qui fabriquent leur aliment */
+  function vxNeed() {
+    var fab = /fabrique|deux/i.test(val('fabrique') || ''), elev = /leveur|Fabricant/.test(val('profil') || '');
+    if (!(fab && elev)) return [];
+    var g = function (n) { return parseFloat(String((f.elements[n] || {}).value || '').replace(',', '.')) || 0; };
+    var k = ['mais', 'soja', 'son']; if (g('chair') > 0) k.push('poulet'); if (g('pondeuse') > 0) k.push('plaq'); if (g('porc') > 0) k.push('porcVif');
+    return k;
+  }
+  function vxMark() {
+    var need = vxNeed(), box = $('#vxBox'), vx = veilleNow();
+    $$('#veille label').forEach(function (l) { var i = l.querySelector('input[name^=vx_]'); if (!i) return; l.classList.toggle('req', need.indexOf(i.name.slice(3)) >= 0 && !(vx[i.name.slice(3)] > 0)); });
+    $('#vxReq').textContent = need.length ? '(obligatoire : vous fabriquez votre aliment)' : '(facultatif, 1 minute)';
+    if (need.length && box && !box.open) box.open = true;
+    return need.filter(function (k) { return !(vx[k] > 0); });
+  }
+  f.addEventListener('change', function (e) { if (e.target && /^(fabrique|profil|chair|pondeuse|porc)$|^vx_/.test(e.target.name || '')) vxMark(); });
+  f.addEventListener('input', function (e) { if (e.target && /^vx_/.test(e.target.name || '')) vxMark(); });
   f.addEventListener('submit', function (e) {
     e.preventDefault();
     var g = function (n) { return (f.elements[n] && f.elements[n].value || '').trim(); };
@@ -295,6 +320,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     if (!R.profil) miss.push('votre profil'); if (!R.nom) miss.push('le nom'); if (digits(R.tel).length < 11) miss.push('un téléphone valide'); if (!R.localite) miss.push('la localité');
     if (deleg && !R.org) miss.push('le nom de la coopérative ou de l’association'); if (deleg && !R.kam) miss.push('le Key Account Manager souhaité');
     if (!R.consent) miss.push('votre accord');
+    var vxm = vxMark(); if (vxm.length) { var lab = {}; VEILLE.forEach(function (v) { lab[v[0]] = v[1].replace(/ \(vente\)/, ' (prix de vente)'); }); miss.push('la veille des prix (obligatoire quand vous fabriquez votre aliment) : ' + vxm.map(function (k) { return lab[k]; }).join(', ')); $('#vxBox').classList.add('need'); } else if ($('#vxBox')) $('#vxBox').classList.remove('need');
     var ck = alimCheck();
     if (!miss.length && ck && alimAck !== ck.key) { alimAck = ck.key; alimShow(); var e2 = $('#err'); e2.hidden = false; e2.textContent = 'Votre quantité d’aliment semble éloignée de votre élevage (environ ' + nf(ck.est, 1) + ' t de maïs par an estimées, ' + nf(ck.decl, 1) + ' t déclarées). Corrigez-la si besoin, ou touchez de nouveau « Enregistrer » pour confirmer.'; $('#alimOut').scrollIntoView({ block: 'center' }); return; }
     R.alimEcart = ck ? Math.round(ck.ec * 100) : null;
@@ -303,7 +329,9 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     err.hidden = true;
     R.acc = $$('[name=acc]:checked').map(function (i) { return i.value; });
     R.vx = veilleNow(); R.eff = { chair: R.chair, pondeuse: R.pondeuse, porc: R.porc };
-    if (!KIOSK) { try { window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(fiche(R.acc)), '_blank', 'noopener'); R.sent = true; } catch (er) { /* */ } }
+    R.fid = 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    R.online = sendOnline();
+    if (!KIOSK && !R.online) { try { window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(fiche(R.acc)), '_blank', 'noopener'); R.sent = true; } catch (er) { /* */ } }
     done();
   });
   function fiche(acc) {
@@ -328,7 +356,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     $('#app').innerHTML = '<div class="done"><div class="ok">✓</div><h2>Merci ' + esc(R.nom.split(/\s+/).slice(-1)[0]) + ' !</h2>' +
       '<p>' + (deleg ? 'Votre délégation sera reçue en <b>salle de conférence SOLEVO</b> avec ' + esc(R.kam) + '.' : (TABLE ? 'Vous êtes reçu(e) à la <b>' + esc(TABLE) + '</b> (4 personnes au plus par table).' : 'Un technicien SOLEVO vous recevra à sa table (4 personnes au plus par table).')) + '</p>' +
       '<div class="off"><h3>SOLEVO vous offre' + (n > 1 ? ' (' + n + ' personnes)' : '') + '</h3><div class="offb"><button type="button" data-a="Eau" class="on">💧 ' + (n > 1 ? n + ' bouteilles' : '1 bouteille') + ' d’eau</button><button type="button" data-a="Café" class="on">☕ ' + (n > 1 ? n + ' cafés' : '1 café') + '</button><button type="button" data-a="non">Non merci</button></div><p class="note">Servi à l’accueil SOLEVO pendant votre attente.</p></div>' +
-      (R.sent ? '<p class="ok" style="font-size:16px">WhatsApp s’est ouvert avec votre fiche : touchez « Envoyer ». Rien ne s’est ouvert ? Utilisez le bouton vert ci-dessous.</p>' : '') + '<ol class="steps"><li>' + (R.sent ? 'Dans WhatsApp, touchez « Envoyer ».' : 'Touchez le bouton vert : votre fiche s’ouvre dans WhatsApp.') + '</li><li>Envoyez le message sans le modifier.</li><li>Vous recevez votre table d’entretien par message. Présentez-vous à l’accueil du stand.</li></ol>' +
+      (R.online ? '<p class="ok" style="font-size:18px">✓ Votre fiche est enregistrée en ligne. Rien d’autre à faire : un technicien SOLEVO vous recontacte.</p><p class="note">Vous pouvez aussi garder une copie sur WhatsApp (facultatif).</p>' : '') + (R.online ? '' : (R.sent ? '<p class="ok" style="font-size:16px">WhatsApp s’est ouvert avec votre fiche : touchez « Envoyer ». Rien ne s’est ouvert ? Utilisez le bouton vert ci-dessous.</p>' : '') + '<ol class="steps"><li>' + (R.sent ? 'Dans WhatsApp, touchez « Envoyer ».' : 'Touchez le bouton vert : votre fiche s’ouvre dans WhatsApp.') + '</li><li>Envoyez le message sans le modifier.</li><li>Vous recevez votre table d’entretien par message. Présentez-vous à l’accueil du stand.</li></ol>') +
       (KIOSK ? '<div class="kq"><h3>Scannez pour envoyer votre fiche depuis votre téléphone</h3><canvas id="kq"></canvas><p class="note">Le message WhatsApp s’ouvre déjà rempli : il suffit de l’envoyer.</p></div>' : '') +
       '<a class="btn" id="go" target="_blank" rel="noopener">' + (KIOSK ? 'Ou envoyer depuis la borne (WhatsApp)' : 'Envoyer ma fiche par WhatsApp') + '</a><a class="btn alt" id="sms">Envoyer par SMS</a>' +
       '<p class="note">Pas de WhatsApp ni de réseau ? Montrez cet écran à l’accueil du stand.</p>' +
