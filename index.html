@@ -206,7 +206,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   var HOOK = '';
   fetch('params.json?t=' + Date.now()).then(function (r) { return r.ok ? r.json() : null; }).then(function (p) {
     if (!p) return; var ok = function (x) { return typeof x === 'number' && isFinite(x) && x > 0; };
-    if (typeof p.gsHook === 'string' && /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(p.gsHook)) HOOK = p.gsHook;
+    if (typeof p.gsHook === 'string' && /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(p.gsHook)) { HOOK = p.gsHook; setTimeout(fqFlush, 1000); }
     if (ok(p.P)) PROD.P = p.P; if (ok(p.tHa)) PROD.tHa = p.tHa; if (ok(p.plus)) PROD.plus = p.plus; if (ok(p.panier)) PROD.panier = p.panier;
     if (ok(p.txMais)) TX_MAIS = p.txMais; if (ok(p.kgPoulet) && ok(p.cycles)) EST.chair = p.kgPoulet * p.cycles / 1000; if (ok(p.pondKgJour)) EST.pond = p.pondKgJour * 365 / 1000; if (ok(p.kgPorc)) EST.porc = p.kgPorc / 1000; if (ok(p.ecartMax)) ECART_MAX = p.ecartMax;
     try { prodShow(); alimShow(); } catch (e) { /* */ }
@@ -286,9 +286,22 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
   $('#simBtn').addEventListener('click', function () { simRun('#simOut'); });
   var R = null, kTimer = null;
   /* enregistrement direct dans la base en ligne (Google Sheets, lien publié dans params.json) */
+  /* sans réseau : la fiche est gardée sur le téléphone et envoyée seule au retour de la connexion */
+  var FQ = 'skf_queue';
+  function fqGet() { try { return JSON.parse(localStorage.getItem(FQ) || '[]'); } catch (e) { return []; } }
+  function fqSet(q) { try { localStorage.setItem(FQ, JSON.stringify(q)); } catch (e) { /* */ } }
+  function post(d) { return fetch(HOOK, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(d) }); }
+  function fqFlush() {
+    if (!HOOK || !navigator.onLine) return; var q = fqGet(); if (!q.length) return;
+    var d = q[0]; post(d).then(function () { var r = fqGet().filter(function (x) { return x.fid !== d.fid; }); fqSet(r); if (r.length) setTimeout(fqFlush, 400); }).catch(function () { /* nouvel essai plus tard */ });
+  }
+  addEventListener('online', function () { setTimeout(fqFlush, 1500); }); setInterval(fqFlush, 30000);
   function sendOnline() {
     if (!HOOK) return false;
-    try { fetch(HOOK, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fid: R.fid, profil: R.profil, nom: R.nom, tel: R.tel, localite: R.localite, email: R.email, fiche: fiche(R.acc) }) }).catch(function () { /* */ }); return true; } catch (e) { return false; }
+    var d = { fid: R.fid, profil: R.profil, nom: R.nom, tel: R.tel, localite: R.localite, email: R.email, fiche: fiche(R.acc) };
+    var q = fqGet(); q.push(d); fqSet(q); R.queued = !navigator.onLine;
+    if (navigator.onLine) post(d).then(function () { fqSet(fqGet().filter(function (x) { return x.fid !== d.fid; })); fqFlush(); }).catch(function () { /* reste dans la file */ });
+    return true;
   }
   var TABLE = ''; try { var mt = decodeURIComponent(location.hash || '').match(/table=([^&]+)/i); if (mt) TABLE = mt[1].trim(); } catch (e) { /* */ }
   if (TABLE) { var ld = document.querySelector('.lead'); if (ld) ld.innerHTML = 'Vous êtes à la <b>' + esc(TABLE) + '</b> du stand SOLEVO : remplissez la fiche, votre entretien suit.'; }
@@ -356,7 +369,7 @@ body.kiosk main{max-width:none}#kqr{background:#fff;border-radius:16px;padding:1
     $('#app').innerHTML = '<div class="done"><div class="ok">✓</div><h2>Merci ' + esc(R.nom.split(/\s+/).slice(-1)[0]) + ' !</h2>' +
       '<p>' + (deleg ? 'Votre délégation sera reçue en <b>salle de conférence SOLEVO</b> avec ' + esc(R.kam) + '.' : (TABLE ? 'Vous êtes reçu(e) à la <b>' + esc(TABLE) + '</b> (4 personnes au plus par table).' : 'Un technicien SOLEVO vous recevra à sa table (4 personnes au plus par table).')) + '</p>' +
       '<div class="off"><h3>SOLEVO vous offre' + (n > 1 ? ' (' + n + ' personnes)' : '') + '</h3><div class="offb"><button type="button" data-a="Eau" class="on">💧 ' + (n > 1 ? n + ' bouteilles' : '1 bouteille') + ' d’eau</button><button type="button" data-a="Café" class="on">☕ ' + (n > 1 ? n + ' cafés' : '1 café') + '</button><button type="button" data-a="non">Non merci</button></div><p class="note">Servi à l’accueil SOLEVO pendant votre attente.</p></div>' +
-      (R.online ? '<p class="ok" style="font-size:18px">✓ Votre fiche est enregistrée en ligne. Rien d’autre à faire : un technicien SOLEVO vous recontacte.</p><p class="note">Vous pouvez aussi garder une copie sur WhatsApp (facultatif).</p>' : '') + (R.online ? '' : (R.sent ? '<p class="ok" style="font-size:16px">WhatsApp s’est ouvert avec votre fiche : touchez « Envoyer ». Rien ne s’est ouvert ? Utilisez le bouton vert ci-dessous.</p>' : '') + '<ol class="steps"><li>' + (R.sent ? 'Dans WhatsApp, touchez « Envoyer ».' : 'Touchez le bouton vert : votre fiche s’ouvre dans WhatsApp.') + '</li><li>Envoyez le message sans le modifier.</li><li>Vous recevez votre table d’entretien par message. Présentez-vous à l’accueil du stand.</li></ol>') +
+      (R.online ? (R.queued ? '<p class="ok" style="font-size:18px">✓ Votre fiche est enregistrée sur ce téléphone. Pas de réseau pour l’instant : elle sera envoyée automatiquement dès le retour de la connexion (gardez cette page ouverte ou rouvrez-la plus tard).</p>' : '<p class="ok" style="font-size:18px">✓ Votre fiche est enregistrée en ligne. Rien d’autre à faire : un technicien SOLEVO vous recontacte.</p>') + '<p class="note">Vous pouvez aussi garder une copie sur WhatsApp (facultatif).</p>' : '') + (R.online ? '' : (R.sent ? '<p class="ok" style="font-size:16px">WhatsApp s’est ouvert avec votre fiche : touchez « Envoyer ». Rien ne s’est ouvert ? Utilisez le bouton vert ci-dessous.</p>' : '') + '<ol class="steps"><li>' + (R.sent ? 'Dans WhatsApp, touchez « Envoyer ».' : 'Touchez le bouton vert : votre fiche s’ouvre dans WhatsApp.') + '</li><li>Envoyez le message sans le modifier.</li><li>Vous recevez votre table d’entretien par message. Présentez-vous à l’accueil du stand.</li></ol>') +
       (KIOSK ? '<div class="kq"><h3>Scannez pour envoyer votre fiche depuis votre téléphone</h3><canvas id="kq"></canvas><p class="note">Le message WhatsApp s’ouvre déjà rempli : il suffit de l’envoyer.</p></div>' : '') +
       '<a class="btn" id="go" target="_blank" rel="noopener">' + (KIOSK ? 'Ou envoyer depuis la borne (WhatsApp)' : 'Envoyer ma fiche par WhatsApp') + '</a><a class="btn alt" id="sms">Envoyer par SMS</a>' +
       '<p class="note">Pas de WhatsApp ni de réseau ? Montrez cet écran à l’accueil du stand.</p>' +
